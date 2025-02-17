@@ -1,8 +1,8 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
 
-const Subject = sequelize.define(
-    "subject",
+const ResourseCategory = sequelize.define(
+    "resourseCategory",
     {
         name: {
             type: DataTypes.STRING,
@@ -10,12 +10,8 @@ const Subject = sequelize.define(
         },
         photo: {
             type: DataTypes.STRING,
-           
-        },
-        type: {
-            type: DataTypes.STRING,
             allowNull: false
         },
     }
 )
-export default Subject
+export default ResourseCategory
