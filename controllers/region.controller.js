@@ -39,7 +39,7 @@ async function create(req,res) {
      
         let {...data}= req.body
        
-        let create = await Center.create({...data})
+        let create = await Region.create({...data})
         res.status(200).json({message:create})
     } catch (error) {
      

@@ -8,11 +8,11 @@ const app = express()
 app.use(express.json())
 app.use("/",mainRouter)
 async function dbConnection() {
-    await sequelize.sync({force :true})
+    await sequelize.sync()
     console.log("mysql connected");
     app.listen(process.env.PORT,()=>{
         console.log(`server is run on port ${process.env.PORT}`);
-        
     })
 }
+
 dbConnection()

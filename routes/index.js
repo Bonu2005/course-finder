@@ -9,6 +9,7 @@ import resourseRouter from "./resourse.routes.js";
 import resourseCategoryRouter from "./resourseCategory.routes.js";
 import signinCourseRouter from "./signinCourse.routes.js";
 import subjectRouter from "./subject.routes.js";
+import userRouter from "./user.routes.js";
 
 const mainRouter =Router()
 mainRouter.use("/center",centerRouter)
@@ -21,4 +22,5 @@ mainRouter.use("/resourse",resourseRouter)
 mainRouter.use("/resourseCategory",resourseCategoryRouter)
 mainRouter.use("/signinCourse",signinCourseRouter)
 mainRouter.use("/subject",subjectRouter)
+mainRouter.use("/user",userRouter)
 export default mainRouter

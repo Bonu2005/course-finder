@@ -27,15 +27,15 @@ async function findOne(req,res) {
 }
 async function create(req,res) {
     try {
-        if(!req.file){
-          return  res.status(404).json({message:"No file uploded"})
-        }
-        let {filename}= req.file
+        // if(!req.file){
+        //   return  res.status(404).json({message:"No file uploded"})
+        // }
+        // let {filename}= req.file
         let {...data}= req.body
-        let create = await Resourse.create({photo:filename,...data})
+        let create = await Resourse.create({...data})
         res.status(200).json({message:create})
     } catch (error) {
-        await fs.unlink(`./uploads/${filename}`) 
+        // await fs.unlink(`./uploads/${filename}`) 
         res.status(400).json({message:error.message})
     }
 

@@ -1,10 +1,26 @@
 //Bonu
+import Center from "../models/center.model.js"
+import Majority from "../models/majority.model.js"
 import SigninCourse from "../models/signinCourse.model.js"
+import User from "../models/user.model.js"
+async function findAll(req,res) {
+    try {
+        
+        let data = await SigninCourse.findAll({include:[{model:User},{model:Majority},{model:Center}]})
+        res.send(data)
+    } catch (error) {
+        res.status(400).json({message:error.message})
+    }
 
+}
 async function create(req,res) {
     try {
-        let {...data}= req.body
+        let data= req.body
+        console.log({...data});
+        
         let create = await SigninCourse.create({...data})
+        console.log(create);
+        
         res.status(200).json({message:create})
     } catch (error) {
         res.status(400).json({message:error.message})
@@ -25,4 +41,4 @@ async function remove(req,res) {
     }
 
 }
-export {create,remove}
+export {create,remove,findAll}
