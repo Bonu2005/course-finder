@@ -2,15 +2,23 @@
 import Center from "../models/center.model.js"
 import { promises as fs}  from "fs"
 import Region from "../models/region.model.js"
+import User from "../models/user.model.js"
 async function findAll(req,res) {
     try {
-        
-        let data = await Center.findAll({include:{model:Region}})
-        res.send(data)
+        const {page =1,pageSize=10,sortBy,sortOrder="ASC"}=req.query
+        const limit = parseInt(pageSize)
+        const offset = (page-1)*limit
+        const order = []
+        if(sortBy){
+            order.push([sortBy,sortOrder])
+        }
+        const where= {}
+                Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
+        let data = await Center.findAndCountAll({where:where,limit:limit,offset:offset,order:order,include:[{model:Region},{model:User}]})
+        res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
     } catch (error) {
         res.status(400).json({message:error.message})
     }
-
 }
 async function findOne(req,res) {
     try {

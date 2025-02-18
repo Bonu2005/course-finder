@@ -35,9 +35,10 @@ const SigninCourse = sequelize.define(
 )
 User.belongsToMany(Center, { through: SigninCourse, foreignKey: "userId", otherKey: "centerId", onDelete: "CASCADE" })
 Center.belongsToMany(User, { through: SigninCourse, foreignKey: "centerId", otherKey: "userId", onDelete: "CASCADE" })
-
 SigninCourse.belongsTo(User, { foreignKey: "userId" })
 SigninCourse.belongsTo(Center, { foreignKey: "centerId" })
+
+
 SigninCourse.hasMany(Majority, { foreignKey: "majorityId" })
 Majority.belongsTo(SigninCourse, { foreignKey: "majorityId" })
 User.hasMany(SigninCourse, { foreignKey: "userId" })

@@ -5,9 +5,17 @@ import User from "../models/user.model.js"
 import ResourseCategory from "../models/resourseCategory.model.js"
 async function findAll(req,res) {
     try {
-        
-        let data = await Resourse.findAll({include:[{model:User},{model:ResourseCategory}]})
-        res.send(data)
+        const {page =1,pageSize=10,sortBy,sortOrder="ASC"}=req.query
+        const limit = parseInt(pageSize)
+        const offset = (page-1)*limit
+        const order = []
+        if(sortBy){
+            order.push([sortBy,sortOrder])
+        }
+        const where= {}
+                Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
+        let data = await Resourse.findAndCountAll({where:where,limit:limit,offset:offset,order:order,include:[{model:User},{model:ResourseCategory}]})
+        res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
     } catch (error) {
         res.status(400).json({message:error.message})
     }

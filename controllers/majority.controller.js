@@ -4,9 +4,17 @@ import Majority from "../models/majority.model.js"
 import Subject from "../models/subject.model.js"
 async function findAll(req,res) {
     try {
-        
-        let data = await Majority.findAll({include:[{model:Subject}]})
-        res.send(data)
+        const {page =1,pageSize=10,sortBy,sortOrder="ASC"}=req.query
+        const limit = parseInt(pageSize)
+        const offset = (page-1)*limit
+        const order = []
+        if(sortBy){
+            order.push([sortBy,sortOrder])
+        }
+        const where= {}
+                Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
+        let data = await Majority.findAndCountAll({where:where,limit:limit,offset:offset,order:order,include:[{model:Subject}]})
+        res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
     } catch (error) {
         res.status(400).json({message:error.message})
     }
