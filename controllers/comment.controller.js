@@ -1,9 +1,11 @@
 //Bonu
-import Subject from "../models/subject.model.js"
+import Center from "../models/center.model.js"
+import User from "../models/user.model.js"
+import Comment from "../models/comment.model.js"
 async function findAll(req,res) {
     try {
         
-        let data = await Subject.findAll()
+        let data = await Comment.findAll({include:[{model:User},{model:Center}]})
         res.send(data)
     } catch (error) {
         res.status(400).json({message:error.message})
@@ -13,7 +15,7 @@ async function findAll(req,res) {
 async function findOne(req,res) {
     try {
         let {id}= req.params
-        let findOne= await Subject.findByPk(id)
+        let findOne= await Comment.findByPk(id,{include:[{model:User},{model:Center}]})
         if(!findOne){
             return  res.status(404).json({message:"not found this kind of center"})
         }
@@ -27,7 +29,7 @@ async function create(req,res) {
       
     
         let {...data}= req.body
-        let create = await Subject.create({...data})
+        let create = await Comment.create({...data})
         res.status(200).json({message:create})
     } catch (error) {
         res.status(400).json({message:error.message})
@@ -38,11 +40,11 @@ async function update(req,res) {
     try {
         let {id}= req.params
         let data= req.body
-        let check =await Subject.findByPk(id)
+        let check =await Comment.findByPk(id)
         if(!check){
             return  res.status(404).json({message:"not found this kind of center"})
         }
-        await Subject.update(data,{where:{id}})
+        await Comment.update(data,{where:{id}})
         return  res.status(204).json({message:"Successfully updated"})
     } catch (error) {
         
@@ -54,11 +56,11 @@ async function remove(req,res) {
     try {
         let {id}= req.params
         let data= req.body
-        let check =await Subject.findByPk(id)
+        let check =await Comment.findByPk(id)
         if(!check){
             return  res.status(404).json({message:"not found this kind of center"})
         }
-        await Subject.destroy(data,{where:{id}})
+        await Comment.destroy(data,{where:{id}})
         return  res.status(204).json({message:"Successfully removed"})
     } catch (error) {
         res.status(400).json({message:error.message})

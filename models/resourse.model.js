@@ -23,7 +23,7 @@ const Resourse = sequelize.define(
         allowNull:false
       },
       userId:{
-        type:DataTypes.STRING,
+        type:DataTypes.INTEGER,
         references:{
           model:User,
           key:"id"

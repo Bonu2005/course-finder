@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
+import Region from "./region.model.js";
 
 const Center = sequelize.define(
     "center",
@@ -13,6 +14,10 @@ const Center = sequelize.define(
       },
       regionId:{
         type:DataTypes.INTEGER,
+        references:{
+          model:Region,
+          key:"id"
+        },
         allowNull:false
       },
       address:{
@@ -27,4 +32,6 @@ const Center = sequelize.define(
       },
     }
 )
+Center.belongsTo(Region,{foreignKey:"regionId"})
+Region.hasMany(Center,{foreignKey:"regionId"})
 export default Center
