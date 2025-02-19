@@ -1,9 +1,10 @@
 //Bonu
-import { Op } from "sequelize"
-import Subject from "../models/subject.model.js"
+import Center from "../models/center.model.js"
+
+import Region from "../models/region.model.js"
 async function findAll(req,res) {
     try {
-        const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
+        const {page =1,pageSize=10,sortBy,sortOrder="ASC"}=req.query
         const limit = parseInt(pageSize)
         const offset = (page-1)*limit
         const order = []
@@ -11,9 +12,10 @@ async function findAll(req,res) {
             order.push([sortBy,sortOrder])
         }
         const where= {}
-        Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
-        let data = await Subject.findAndCountAll({where:where,limit:limit,offset:offset,order:order})
+                Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
+        let data = await Region.findAndCountAll({where:where,limit:limit,offset:offset,order:order})
         res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
+        
     } catch (error) {
         res.status(400).json({message:error.message})
     }
@@ -22,7 +24,7 @@ async function findAll(req,res) {
 async function findOne(req,res) {
     try {
         let {id}= req.params
-        let findOne= await Subject.findByPk(id)
+        let findOne= await Region.findByPk(id)
         if(!findOne){
             return  res.status(404).json({message:"not found this kind of center"})
         }
@@ -30,15 +32,25 @@ async function findOne(req,res) {
     } catch (error) {
         res.status(400).json({message:error.message})
     }
+
+}
+async function findByQuery(req,res) {
+    try {
+        
+    } catch (error) {
+        res.status(400).json({message:error.message})
+    }
+
 }
 async function create(req,res) {
     try {
-      
-    
+     
         let {...data}= req.body
-        let create = await Subject.create({...data})
+       
+        let create = await Region.create({...data})
         res.status(200).json({message:create})
     } catch (error) {
+     
         res.status(400).json({message:error.message})
     }
 
@@ -47,11 +59,11 @@ async function update(req,res) {
     try {
         let {id}= req.params
         let data= req.body
-        let check =await Subject.findByPk(id)
+        let check =await Region.findByPk(id)
         if(!check){
             return  res.status(404).json({message:"not found this kind of center"})
         }
-        await Subject.update(data,{where:{id}})
+        await Region.update(data,{where:{id}})
         return  res.status(204).json({message:"Successfully updated"})
     } catch (error) {
         
@@ -63,15 +75,16 @@ async function remove(req,res) {
     try {
         let {id}= req.params
         let data= req.body
-        let check =await Subject.findByPk(id)
+        let check =await Region.findByPk(id)
         if(!check){
             return  res.status(404).json({message:"not found this kind of center"})
         }
-        await Subject.destroy(data,{where:{id}})
+        await Region.destroy(data,{where:{id}})
+        
         return  res.status(204).json({message:"Successfully removed"})
     } catch (error) {
         res.status(400).json({message:error.message})
     }
 
 }
-export {findAll,findOne,create,update,remove}
+export {findAll,findOne,findByQuery,create,update,remove}

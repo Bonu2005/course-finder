@@ -6,7 +6,6 @@ import Center from "./center.model.js";
 const Like = sequelize.define(
     "like",
     {
-      
       userId:{
         type:DataTypes.INTEGER,
         references:{
@@ -26,11 +25,10 @@ const Like = sequelize.define(
     }
 )
 
-Center.belongsToMany(User,{through:Like,foreignKey:"centerId",otherKey:"userId",onDelete:"CASCADE"})
-User.belongsToMany(Center,{through:Like,foreignKey:"userId",otherKey:"centerId",onDelete:"CASCADE"})
 Like.belongsTo(User,{foreignKey:"userId",onDelete:"CASCADE"})
 Like.belongsTo(Center,{foreignKey:"centerId",onDelete:"CASCADE"})
 Center.hasMany(Like,{foreignKey:"centerId",onDelete:"CASCADE"})
 User.hasMany(Like,{foreignKey:"userId",onDelete:"CASCADE"})
+
 
 export default Like

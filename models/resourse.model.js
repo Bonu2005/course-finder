@@ -23,7 +23,7 @@ const Resourse = sequelize.define(
         allowNull:false
       },
       userId:{
-        type:DataTypes.STRING,
+        type:DataTypes.INTEGER,
         references:{
           model:User,
           key:"id"
@@ -42,4 +42,6 @@ const Resourse = sequelize.define(
 )
 ResourseCategory.hasMany(Resourse,{foreignKey:"resourseCategoryId"})
 Resourse.belongsTo(ResourseCategory,{foreignKey:"resourseCategoryId"})
+Resourse.belongsTo(User,{foreignKey:"userId"})
+User.hasMany(Resourse,{foreignKey:"userId"})
 export default Resourse

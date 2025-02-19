@@ -10,11 +10,11 @@ userRouter.get("/send-otp", send_otp);
 userRouter.get("/verify-otp", verify_otp);
 userRouter.post("/register", upload.single("image"), register);
 userRouter.post("/login", login);
-userRouter.get("/users", verifyToken, findAll);
-userRouter.get("/user/:id", verifyToken,verifyRole(["user"]), findOne);
-userRouter.post("/user",verifyToken,verifyRole(["user"]), upload.single("image"), create);
+userRouter.get("/", verifyToken, findAll);
+userRouter.get("/:id", verifyToken,verifyRole(["user"]), findOne);
+userRouter.post("/",verifyToken,verifyRole(["user"]), upload.single("image"), create);
 userRouter.get("/send-update-otp/:id",verifyToken,verifySelf(["user"]), send_update_otp);
-userRouter.patch("/user/:otp2", verifyToken,verifyRole(["user"]), upload.single("image"), update);
-userRouter.delete("/user/:id", verifyToken,verifyRole(["admin"]), remove);
+userRouter.patch("/:otp2/:oldemail", verifyToken,verifyRole(["user"]), upload.single("image"), update);
+userRouter.delete("/:id", verifyToken,verifyRole(["user"]), remove);
 
 export default userRouter;

@@ -2,12 +2,12 @@
 import User from "../models/user.model.js";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
-import userValidate from "../validations/user.validation.js";
+import {userValidate, usersPatchValidate} from "../validations/user.validation.js";
 import isGmail from "../validations/email.validation.js";
 import nodemailer from "nodemailer";
 import otp from 'otplib';
 dotenv.config();
-otp.totp.options = { step: 600, digits: 5 };
+otp.totp.options = { step: 1800, digits: 5 };
 import jwt from "jsonwebtoken";
 import path from 'path';
 import fs from "fs";
@@ -122,14 +122,22 @@ async function login(req, res) {
 
 async function findAll(req, res) {
     try {
-        let data = await User.findAll();
-        if(data.length==0){
-            return res.status(403).send("Hech nima topilmadi!");
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        let offset = (page - 1) * limit;
+
+        let { count, rows } = await User.findAndCountAll({limit, offset});
+
+        if (rows.length === 0) {
+            return res.status(404).send({ message: "Hech nima topilmadi!" });
         }
-        return res.status(201).send({"Barcha userlar":data});
+
+        return res.status(200).send({page,limit,totalUsers: count,totalPages: Math.ceil(count / limit),users: rows});
+
     } catch (error) {
-        res.status(403).send({error:error.message});
-        console.log({error});
+        res.status(500).send({ error: error.message });
+        console.log({ error });
     }
 }
 
@@ -172,7 +180,7 @@ async function create(req, res) {
                 return res.status(403).send({error:"Adminda type bo'lmaydi"});
             }
             if(type==undefined){
-                type='no type';
+                type='notype';
             }
         } 
         let data = await User.create({fullName, image, email, password:hashPas, phone, type, role});
@@ -219,23 +227,30 @@ async function send_update_otp(req, res) {
     }
 }
 
-async function update(req, res) {
+async function update(req, res){
     try {
-        let {fullName, email, password, phone, type, role} = req.body;
-        let {otp2} = req.params;
-        let secret = email+process.env.OTPKALIT;
-        let checkOtp = otp.totp.check(otp2,secret, { window: 2 });
+        let {value, error} = usersPatchValidate(req.body);
+        if(error){
+            return res.status(403).send({error:error.details[0].message});
+        }
+        let {fullName, email, password, phone, type, role} = value;
+        let {otp2, oldemail} = req.params;
+        let secret = oldemail+process.env.OTPKALIT;
+        
+        let checkOtp = otp.totp.check(otp2,secret);
+        console.log(checkOtp);
+        
         if(!checkOtp){
             return res.status(403).send({error:"Noto'g'ri otp!"});
         }
-        let dat = await User.findOne({where:{email}});
+        let dat = await User.findOne({where:{email:oldemail}});
         if(!dat){
             res.status(403).send({error:"Foydalanuvchi topilmadi."});
         }  
-        console.log(dat);
+        
         
         let oldimage = dat.dataValues.image;
-        let image = req.file ? req.file.filename : null;
+        let image = req.file ? req.file.filename : oldimage;
         if (image){
                fs.unlinkSync(`uploads/${oldimage}`); 
         }
@@ -245,13 +260,20 @@ async function update(req, res) {
             }        
             type = "notype";     
         } 
-        else if(role==="user"){
+        if(role==="user"){ 
             if(!type){
                 return res.status(403).send({error:"Userda type bo'lishi shart"});
-            }
+            }            
         } 
+        fullName ||= dat.fullName;
+        type ||= dat.type;
+        email ||= dat.email;
+        password ||= dat.password;
+        phone ||= dat.phone;
+        role ||= dat.role;
+
         let hahs = bcrypt.hashSync(password, 10);
-        await User.update({fullName, image, email, password:hahs, phone, type, role}, {where:{email}});
+        await User.update({fullName, image, email, password:hahs, phone, type, role}, {where:{email:oldemail}});
         res.status(201).send("updated");
     } catch (error) {
         res.status(403).send({error:error.message});
@@ -259,7 +281,7 @@ async function update(req, res) {
     }
 }
 
-async function remove(req, res) {
+async function remove(req, res){
     try {
         let {id} = req.params; 
         let dat = await User.findOne({where:{id}});
@@ -281,3 +303,4 @@ async function remove(req, res) {
 }
 
 export {send_otp, verify_otp, register, login, findAll, findOne, create, update, remove, send_update_otp}; 
+
