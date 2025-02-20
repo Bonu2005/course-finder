@@ -5,10 +5,9 @@ function userValidate(data) {
         image: Joi.string().optional().allow(null),
         email: Joi.string().required(),
         password: Joi.string().required(),
-        phone: Joi.string().required(),
+        phone: Joi.string().min(13).max(13).required(),
         type: Joi.string().optional(),
         role: Joi.string().optional()
-
     })
     return userSchema.validate(data,{abortEarly:false});
 }
@@ -20,10 +19,9 @@ function usersPatchValidate(data) {
         image: Joi.string().optional().allow(null),
         email: Joi.string().optional(),
         password: Joi.string().optional(),
-        phone: Joi.string().optional(),
+        phone: Joi.string().min(13).max(13).optional(),
         type: Joi.string().optional(),
         role: Joi.string().optional()
-
     })
     return userPatchSchema.validate(data,{abortEarly:false});
 }

@@ -8,8 +8,13 @@ let token = req.header("Authorization");
 let {id} = req.params;
 
 if(!token){
-    return res.status(403).send({error:"Token not found"});
+    return res.status(401).send({error:"Token not found"});
 } 
+
+if (token.startsWith("Bearer ")) {
+    token = token.split(" ")[1];
+}
+
 try {
     let data = jwt.verify(token, process.env.accesstoken);
     if(newData.includes(data.role)||id===data.id){
@@ -22,7 +27,7 @@ try {
    
 
 } catch (error) {
-    res.status(403).send({Error:"Wrong token"});
+    res.status(401).send({Error:"Wrong token"});
     console.log({error});
     
 }

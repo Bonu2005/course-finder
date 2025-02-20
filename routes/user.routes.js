@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import {send_otp, verify_otp, register, login, findAll, findOne, create, update, remove, send_update_otp} from "../controllers/user.controller.js";
 import upload from "../multer/multerMajority.js";
+=======
+import {send_otp, verify_otp, register, login, findAll, findOne, createAdmin, update, remove, send_update_otp, logout} from "../controllers/user.controller.js";
+import upload from "../multer/UsersMulter.js";
+>>>>>>> 52dd1e64cc7a48a1e8e5981d3adfdc5d099525a9
 import {Router} from 'express';
 import verifyRole from "../middlewares/verifyRole.js";
 import verifyToken from "../middlewares/verifyToken.js";
@@ -382,6 +387,11 @@ userRouter.patch("/:otp2/:oldemail", verifyToken, verifyRole(["user"]), upload.s
  */
 userRouter.delete("/:id", verifyToken, verifyRole(["user"]), remove);
 
+userRouter.post("/",verifyToken,verifyRole(["user"]), upload.single("image"), createAdmin);
+userRouter.get("/send-update-otp/:id",verifyToken, verifySelf(["user"]), send_update_otp);
+userRouter.patch("/:otp2/:oldemail", verifyToken,verifyRole(["user"]), upload.single("image"), update);
+userRouter.delete("/:id", verifyToken,verifyRole(["user"]), remove);
 userRouter.post("/refreshToken", verifyToken, refreshTokens);
+userRouter.post("/logout", verifyToken, logout);
 
 export default userRouter;

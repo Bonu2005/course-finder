@@ -7,7 +7,7 @@ const verifyToken = (req,res,next)=>{
 let token = req.header("Authorization");
 
 if(!token){
-    return res.status(403).send({error:"Token not found"});
+    return res.status(401).send({error:"Token not found"});
 }
 
 if (token.startsWith("Bearer ")) {
@@ -19,7 +19,7 @@ try {
     req.user = data;
     next();
 } catch (error) {
-    res.status(403).send({Error:"Wrong token"});
+    res.status(401).send({Error:"Wrong token"});
     console.log({error});
     
 }
