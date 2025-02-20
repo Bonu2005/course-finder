@@ -303,7 +303,6 @@ async function update(req, res) {
         if (!otp.totp.check(otp2, secret)) {
             return res.status(400).send({ error: "Noto'g'ri otp!" });
         }
-        // OTP to'g'ri bo'lsa, uni ishlatilgan sifatida belgilaymiz
         usedOtps.add(otp2);
 
         let dat = await User.findOne({ where: { email: oldemail } });
@@ -311,9 +310,7 @@ async function update(req, res) {
             return res.status(404).send({ error: "Foydalanuvchi topilmadi." });
         }
 
-        // Eski rasm nomini saqlaymiz
         let oldimage = dat.dataValues.image;
-        // Yangi rasm kelgan bo'lsa, uni vaqtincha yangi rasm nomi sifatida saqlaymiz
         let newImage = req.file ? req.file.filename : oldimage;
 
         if (phone && !check_phone(phone)) {
@@ -346,7 +343,6 @@ async function update(req, res) {
             { where: { email: oldemail } }
         );
 
-        // Update muvaffaqiyatli bo'lsa, agar yangi rasm kiritilgan bo'lsa va eski rasm mavjud bo'lsa, uni o'chiramiz
         if (req.file && oldimage && oldimage !== newImage) {
             const filePath = `uploadsUser/${oldimage}`;
             if (fs.existsSync(filePath)) {
