@@ -6,11 +6,10 @@ const rasmUpload = multer.diskStorage({
         cb(null, `${Date.now()}${path.extname(file.originalname)}`)
     },
     destination: (req, file, cb) => {
-        cb(null, "uploads");
+        cb(null, "uploadsMajority");
     },
 });
 
 let upload = multer({storage:rasmUpload});
 
 export default upload;
-

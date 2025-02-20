@@ -1,11 +1,9 @@
 function isGmail(email) {
-    return typeof email === "string" && email.endsWith("@gmail.com");
+    return typeof email === "string" && /@gmail\.\w+$/.test(email);
 }
 
-
-
 function check_phone(phone){
-        return phone.startsWith("+998");
-    }
+   return phone.startsWith("+998");
+ }
     
 export {isGmail, check_phone};

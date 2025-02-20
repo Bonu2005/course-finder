@@ -6,7 +6,7 @@ async function  refreshTokens(req, res) {
     const { refreshToken } = req.body; 
 
     if (!refreshToken) {
-        return res.status(403).send({ error: "Refresh token kiritish shart!" });
+        return res.status(400).send({ error: "Refresh token kiritish shart!" });
     }
 
     try {
@@ -20,7 +20,7 @@ async function  refreshTokens(req, res) {
  
         res.status(200).send({ accessToken: newAccessToken });
     } catch (error) {
-        return res.status(403).send({ error: "Noto'g'ri refresh token" });
+        return res.status(401).send({ error: "Noto'g'ri refresh token" });
     }
 }
 

@@ -8,18 +8,21 @@ import otp from 'otplib';
 import jwt from "jsonwebtoken";
 import path from 'path';
 import fs from "fs";
+import tempModel from "../models/temp.model.js";
 dotenv.config();
-otp.totp.options = { step: 1800, digits: 5 };
+otp.totp.options = { step: 600, digits: 5 };
+const usedOtps = new Set();
+
 
 async function send_otp(req, res) {
     try {
         let email = req.body.email;
         if(!isGmail(email)){
-            return res.status(403).send("Emailning oxiri @gmail.com bilan tugashi shart");
+            return res.status(400).send({error:"Siz kiritgan email no'tog'ri formatda"});
         }
         let data = await User.findOne({where:{email}});
         if(data){
-            return res.status(403).send("Bu email allqachon ro'yxatdan o'tib bo'lgan!");
+            return res.status(409).send({error:"Bu email allqachon ro'yxatdan o'tib bo'lgan!"});
         }
         
         let secret = email+process.env.OTPKEY;
@@ -38,11 +41,11 @@ async function send_otp(req, res) {
             subject: "Activate your account",  
             html: `<h3>Your otp code: ${otp1}</h3>`,
           });
-          await User.create({fullname:null, image:null, email, password:null, phone:null, type:null,role:null});
-          res.status(201).send("We have sent a verification code to your email address. Please verify it!");
+         
+          res.status(200).send({success:"We have sent a verification code to your email address. Please verify it!"});
 
     } catch (error) {
-        res.status(403).send({error:error.message});
+        res.status(500).send({error:error.message});
         console.log({error});
     }
 }
@@ -54,11 +57,12 @@ async function verify_otp(req, res) {
         let checkOtp = otp.totp.check(otp1,secret);
         
         if(!checkOtp){
-            return res.status(403).send("Wrong otp!");
+            return res.status(400).send({error:"Wrong otp!"});
         }
-        res.status(201).send("Virified successfully!");
+        res.status(200).send({success:"Virified successfully!"});
+        await tempModel.create({email});
     } catch (error) {
-        res.status(403).send({error:error.message});
+        res.status(500).send({error:error.message});
         console.log({error});
     }
 }
@@ -66,36 +70,39 @@ async function verify_otp(req, res) {
 async function register(req, res) {
     try {
         if(!req.file){
-            return res.status(403).send({error:"No file uploded"}); 
+            return res.status(400).send({error:"No file uploded"}); 
         }
         let {value, error} = userValidate(req.body);
         if(error){
-            return res.status(403).send({error:error.details[0].message});
+            return res.status(400).send({error:error.details[0].message});
         }
         let {filename}=req.file
+        if(!isGmail(value.email)){
+            return res.status(400).send({error:"Siz kiritgan email no'tog'ri formatda"});
+        }
         if(!check_phone(value.phone)){
-            return res.status(403).send("Phone +998 bilan boshlanishi shart");
+            return res.status(400).send({error:"Phone +998 bilan boshlanishi shart"});
         }
         let hashedPassword = bcrypt.hashSync(value.password, 10);
         value.password=hashedPassword
-        let checkemail = await User.findOne({where:{email:value.email}});
-        
+        let checkemail = await tempModel.findOne({where:{email:value.email}});
         if(!checkemail){
-            return res.status(403).send("Bu email tasdiqlanmagan!");
+            return res.status(409).send({error:"Bu email tasdiqlanmagan yoki ro'yxatdan o'tib bo'lgan!"});
         }
         if(value.role==="admin"){
-            return res.status(403).send("Admin bo'lib ro'yxatdan o'tish taqiqlanadi.");
+            return res.status(403).send({error:"Admin bo'lib ro'yxatdan o'tish taqiqlanadi."});
         }
         if(!value.type){
-            return res.status(403).send("Type bo'lishi shart.");
+            return res.status(400).send({error:"Type bo'lishi shart."});
         }
         if(value.role==undefined){
             value.role = "user"
         }
-        await User.update({image:filename,...value},{where:{email:value.email}});
-        res.status(201).send("User registered successfully!");
+        await User.create({image:filename,...value});
+        await tempModel.destroy({where:{email:value.email}});
+        res.status(201).send({success:"User registered successfully!"});
     } catch (error) {
-        res.status(403).send({error:error.message});
+        res.status(500).send({error:error.message});
         console.log({error});
     }
 } 
@@ -108,7 +115,7 @@ function generateTokens(user) {
     );
 
     const refreshToken = jwt.sign(
-        { id: user.id }, 
+        { id: user.id, role: user.role, type: user.type }, 
         process.env.refreshtoken, 
         { expiresIn: "7d" } 
     );
@@ -120,27 +127,33 @@ async function login(req, res) {
     try {
         let {email, password} = req.body;
         if(!isGmail(email)){
-            return res.status(403).send("Emailning oxiri @gmail.com bilan tugashi shart");
+            return res.status(400).send({error:"Siz kiritgan email no'tog'ri formatda"});
         }
         let checkemail = await User.findOne({where:{email}});
         if(!checkemail){
-            return res.status(403).send("Bu email ro'yxatdan o'tmagan yoki noto'g'ri!");
+            return res.status(404).send({error:"Bu email ro'yxatdan o'tmagan yoki noto'g'ri!"});
         }
         let compPass = bcrypt.compareSync(password, checkemail.password);
         if(!compPass){
-            return res.status(403).send("Bu parol xato!");
+            return res.status(401).send({error:"Bu parol xato!"});
         }
         const tokens = generateTokens(checkemail);
 
-        res.status(201).send({
+        res.cookie('refreshToken', tokens.refreshToken, {
+            httpOnly: true,
+            secure: process.env.nodeenv === 'qwerty', 
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 
+        });
+
+        res.status(200).send({
             message: "Muvaffaqiyatli login!",
             checkemail,
-            accessToken: tokens.accessToken,
-            refreshToken: tokens.refreshToken
+            accessToken: tokens.accessToken
         });
     
     } catch (error) {
-        res.status(403).send({error:error.message});
+        res.status(500).send({error:error.message});
         console.log({error});
     }
 }
@@ -155,7 +168,7 @@ async function findAll(req, res) {
         let { count, rows } = await User.findAndCountAll({limit, offset});
 
         if (rows.length === 0) {
-            return res.status(404).send({ message: "Hech nima topilmadi!" });
+            return res.status(404).send({ error: "Hech nima topilmadi!" });
         }
 
         return res.status(200).send({page,limit,totalUsers: count,totalPages: Math.ceil(count / limit),users: rows});
@@ -171,35 +184,35 @@ async function findOne(req, res) {
         let {id} = req.params;
         let data = await User.findOne({where:{id}});
         if(!data){
-            return res.status(403).send("User topilmadi!");
+            return res.status(404).send({error:"User topilmadi!"});
         }
-        return res.status(201).send({"Malumot":data});
+        return res.status(200).send({"Malumot":data});
     } catch (error) {
-        res.status(403).send({error:error.message});
+        res.status(500).send({error:error.message});
         console.log({error});
     }
 }
 
-async function create(req, res) {
+async function createAdmin(req, res) {
     try {
         let {value, error} = userValidate(req.body);
         if(error){
-            res.status(403).send({error:error.details[0].message});
+            res.status(400).send({error:error.details[0].message});
         }
         
         let image = req.file.filename;
         let {fullName, email, password, phone, type, role} = value;
 
         if(!check_phone(phone)){
-            return res.status(403).send("Phone +998 bilan boshlanishi shart");
+            return res.status(400).send({error:"Phone +998 bilan boshlanishi shart"});
         }
            
         if(!isGmail(email)){
-            return res.status(403).send("Emailning oxiri @gmail.com bilan tugashi shart");
+            return res.status(400).send({error:"Siz kiritgan email no'tog'ri formatda"});
         }
         let checkemail = await User.findOne({where:{email}});
         if(checkemail){
-            return res.status(403).send("Bu email ro'yxatdan o'tib bo'lgan!");
+            return res.status(409).send({error:"Bu email ro'yxatdan o'tib bo'lgan!"});
         }
         let hashPas = bcrypt.hashSync(password, 10);
         if(role==="user"&&role!=="admin"){
@@ -207,7 +220,7 @@ async function create(req, res) {
         }
         if(role==="admin"){
             if(type){
-                return res.status(403).send({error:"Adminda type bo'lmaydi"});
+                return res.status(400).send({error:"Adminda type bo'lmaydi"});
             }
             if(type==undefined){
                 type='notype';
@@ -216,7 +229,7 @@ async function create(req, res) {
         let data = await User.create({fullName, image, email, password:hashPas, phone, type, role});
         res.status(201).send({"Admin created successfully!":data});
     } catch (error) {
-        res.status(403).send({error:error.message});
+        res.status(500).send({error:error.message});
         console.log({error});
     }
 }
@@ -226,11 +239,11 @@ async function send_update_otp(req, res) {
         let {id} = req.params;
         let email = req.body.email;
         if(!isGmail(email)){
-            return res.status(403).send("Emailning oxiri @gmail.com bilan tugashi shart");
+            return res.status(400).send({error:"Siz kiritgan email no'tog'ri formatda"});
         }
         let data = await User.findOne({where:{id,email}});
         if(!data){
-            return res.status(403).send("Noto'gri email yoki id kiritdingiz");
+            return res.status(404).send({error:"Noto'gri email yoki id kiritdingiz"});
         }
         
         let secret = email+process.env.OTPKALIT;
@@ -249,10 +262,10 @@ async function send_update_otp(req, res) {
             subject: "Activate your account",  
             html: `<h3>Your otp code: ${otp2}</h3>`,
           });
-          res.status(201).send("Please verify otp code, to update your datas!");
+          res.status(200).send({success:"Please verify otp code, to update your datas!"});
 
     } catch (error) {
-        res.status(403).send({error:error.message});
+        res.status(500).send({error:error.message});
         console.log({error});
     }
 }
@@ -261,44 +274,50 @@ async function update(req, res){
     try {
         let {value, error} = usersPatchValidate(req.body);
         if(error){
-            return res.status(403).send({error:error.details[0].message});
+            return res.status(400).send({error:error.details[0].message});
         }
         let {fullName, email, password, phone, type, role} = value;
         let {otp2, oldemail} = req.params;
         let secret = oldemail+process.env.OTPKALIT;
+
+        if(usedOtps.has(otp2)){
+            return res.status(400).send({error:"Bu otp ishlatilgan, qaytadan otp oling"});
+        }
+        usedOtps.add(otp2);
         
         let checkOtp = otp.totp.check(otp2,secret);
-        console.log(checkOtp);
-        
         if(!checkOtp){
-            return res.status(403).send({error:"Noto'g'ri otp!"});
+            return res.status(400).send({error:"Noto'g'ri otp!"});
         }
+
+
         let dat = await User.findOne({where:{email:oldemail}});
         if(!dat){
-            res.status(403).send({error:"Foydalanuvchi topilmadi."});
+            res.status(404).send({error:"Foydalanuvchi topilmadi."});
         }  
         
         
         let oldimage = dat.dataValues.image;
         let image = req.file ? req.file.filename : oldimage;
         if (image){
-               fs.unlinkSync(`uploads/${oldimage}`); 
+               fs.unlinkSync(`uploadsUser/${oldimage}`); 
         }
 
         if(!check_phone(phone)){
-            return res.status(403).send("Phone +998 bilan boshlanishi shart");
+            return res.status(400).send({error:"Phone +998 bilan boshlanishi shart"});
+
         }
 
         if(role==="admin"){ 
             if(type){
-                return res.status(403).send({error:"Adminda type bo'lmaydi"});
+                return res.status(400).send({error:"Adminda type bo'lmaydi"});
             }        
             type = "notype";     
         } 
 
         if(role==="user"){ 
             if(!type){
-                return res.status(403).send({error:"Userda type bo'lishi shart"});
+                return res.status(400).send({error:"Userda type bo'lishi shart"});
             }            
         } 
 
@@ -311,9 +330,9 @@ async function update(req, res){
 
         let hahs = bcrypt.hashSync(password, 10);
         await User.update({fullName, image, email, password:hahs, phone, type, role}, {where:{email:oldemail}});
-        res.status(201).send("updated");
+        res.status(200).send({success:"updated"});
     } catch (error) {
-        res.status(403).send({error:error.message});
+        res.status(500).send({error:error.message});
         console.log({error});
     }
 }
@@ -323,20 +342,30 @@ async function remove(req, res){
         let {id} = req.params; 
         let dat = await User.findOne({where:{id}});
         if(!dat){
-            res.status(403).send({error:"Foydalanuvchi topilmadi."});
+            res.status(400).send({error:"Foydalanuvchi topilmadi."});
         }  
         if (dat.image) {
-            let imagePath = path.join("uploads", dat.image);
+            let imagePath = path.join("uploadsUser", dat.image);
             if (fs.existsSync(imagePath)) {
                 fs.unlinkSync(imagePath); 
             }
         }
         await User.destroy({where:{id}});
-        res.status(403).send("Deleted");
+        res.status(200).send({success:"Deleted"});
     } catch (error) {
-        res.status(403).send({error:error.message});
+        res.status(500).send({error:error.message});
         console.log({error});
     }
 }
 
-export {send_otp, verify_otp, register, login, findAll, findOne, create, update, remove, send_update_otp};
+async function logout(req, res) {
+    try {
+        res.clearCookie('refreshToken');
+        res.status(200).send({success:"Siz tizimdan chiqib ketdingiz"});
+    } catch (error) {
+        res.status(500).send({error:error.message});
+        console.log({error});
+    }
+}
+
+export {send_otp, verify_otp, register, login, findAll, findOne, createAdmin, update, remove, send_update_otp, logout};
