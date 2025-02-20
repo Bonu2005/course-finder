@@ -9,10 +9,28 @@ import jwt from "jsonwebtoken";
 import path from 'path';
 import fs from "fs";
 import tempModel from "../models/temp.model.js";
+import { Sequelize } from "sequelize";
+import {Op} from "sequelize"
 dotenv.config();
 otp.totp.options = { step: 600, digits: 5 };
 const usedOtps = new Set();
 
+
+function generateTokens(user) {
+    const accessToken = jwt.sign(
+        { id: user.id, role: user.role, type: user.type }, 
+        process.env.accesstoken, 
+        { expiresIn: "15m" }
+    );
+
+    const refreshToken = jwt.sign(
+        { id: user.id, role: user.role, type: user.type }, 
+        process.env.refreshtoken, 
+        { expiresIn: "7d" } 
+    );
+
+    return { accessToken, refreshToken };
+}
 
 async function send_otp(req, res) {
     try {
@@ -98,30 +116,29 @@ async function register(req, res) {
         if(value.role==undefined){
             value.role = "user"
         }
-        await User.create({image:filename,...value});
+        let newUser = await User.create({image:filename,...value});
         await tempModel.destroy({where:{email:value.email}});
-        res.status(201).send({success:"User registered successfully!"});
+
+        const tokens = generateTokens(value);
+
+        res.cookie('refreshToken', tokens.refreshToken, {
+        httpOnly: true,
+        secure: process.env.nodeenv === 'qwerty', 
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000 
+    });
+
+    res.status(200).send({
+        message: "Muvaffaqiyatli registratsiya!",
+        newUser,
+        accessToken: tokens.accessToken
+});
+
     } catch (error) {
         res.status(500).send({error:error.message});
         console.log({error});
     }
 } 
-
-function generateTokens(user) {
-    const accessToken = jwt.sign(
-        { id: user.id, role: user.role, type: user.type }, 
-        process.env.accesstoken, 
-        { expiresIn: "15m" }
-    );
-
-    const refreshToken = jwt.sign(
-        { id: user.id, role: user.role, type: user.type }, 
-        process.env.refreshtoken, 
-        { expiresIn: "7d" } 
-    );
-
-    return { accessToken, refreshToken };
-}
 
 async function login(req, res) {
     try {
@@ -158,24 +175,24 @@ async function login(req, res) {
     }
 }
 
-async function findAll(req, res) {
+async function findAll(req,res) {
     try {
-        let { page = 1, limit = 10 } = req.query;
-        page = parseInt(page);
-        limit = parseInt(limit);
-        let offset = (page - 1) * limit;
-
-        let { count, rows } = await User.findAndCountAll({limit, offset});
-
-        if (rows.length === 0) {
-            return res.status(404).send({ error: "Hech nima topilmadi!" });
+        const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
+        const limit = parseInt(pageSize)
+        const offset = (page-1)*limit
+        const order = []
+        if(sortBy){
+            order.push([sortBy,sortOrder])
         }
-
-        return res.status(200).send({page,limit,totalUsers: count,totalPages: Math.ceil(count / limit),users: rows});
-
+        const where= {}
+                Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
+        let data = await User.findAndCountAll({where:where,limit:limit,offset:offset,order:order});
+        if(!data){
+            return res.status(400).json({error:"Hozircha userlar yo'q!"})
+        }
+        res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
     } catch (error) {
-        res.status(500).send({ error: error.message });
-        console.log({ error });
+        res.status(500).json({message:error.message})
     }
 }
 
@@ -270,56 +287,51 @@ async function send_update_otp(req, res) {
     }
 }
 
-async function update(req, res){
+async function update(req, res) {
     try {
-        let {value, error} = usersPatchValidate(req.body);
-        if(error){
-            return res.status(400).send({error:error.details[0].message});
+        let { value, error } = usersPatchValidate(req.body);
+        if (error) {
+            return res.status(400).send({ error: error.details[0].message });
         }
-        let {fullName, email, password, phone, type, role} = value;
-        let {otp2, oldemail} = req.params;
-        let secret = oldemail+process.env.OTPKALIT;
+        let { fullName, email, password, phone, type, role } = value;
+        let { otp2, oldemail } = req.params;
+        let secret = oldemail + process.env.OTPKALIT;
 
-        if(usedOtps.has(otp2)){
-            return res.status(400).send({error:"Bu otp ishlatilgan, qaytadan otp oling"});
+        if (usedOtps.has(otp2)) {
+            return res.status(400).send({ error: "Bu otp ishlatilgan, qaytadan otp oling" });
         }
+        if (!otp.totp.check(otp2, secret)) {
+            return res.status(400).send({ error: "Noto'g'ri otp!" });
+        }
+        // OTP to'g'ri bo'lsa, uni ishlatilgan sifatida belgilaymiz
         usedOtps.add(otp2);
-        
-        let checkOtp = otp.totp.check(otp2,secret);
-        if(!checkOtp){
-            return res.status(400).send({error:"Noto'g'ri otp!"});
+
+        let dat = await User.findOne({ where: { email: oldemail } });
+        if (!dat) {
+            return res.status(404).send({ error: "Foydalanuvchi topilmadi." });
         }
 
-
-        let dat = await User.findOne({where:{email:oldemail}});
-        if(!dat){
-            res.status(404).send({error:"Foydalanuvchi topilmadi."});
-        }  
-        
-        
+        // Eski rasm nomini saqlaymiz
         let oldimage = dat.dataValues.image;
-        let image = req.file ? req.file.filename : oldimage;
-        if (image){
-               fs.unlinkSync(`uploadsUser/${oldimage}`); 
+        // Yangi rasm kelgan bo'lsa, uni vaqtincha yangi rasm nomi sifatida saqlaymiz
+        let newImage = req.file ? req.file.filename : oldimage;
+
+        if (phone && !check_phone(phone)) {
+            return res.status(400).send({ error: "Phone +998 bilan boshlanishi shart" });
         }
 
-        if(!check_phone(phone)){
-            return res.status(400).send({error:"Phone +998 bilan boshlanishi shart"});
-
+        if (role === "admin") {
+            if (type) {
+                return res.status(400).send({ error: "Adminda type bo'lmaydi" });
+            }
+            type = "notype";
         }
 
-        if(role==="admin"){ 
-            if(type){
-                return res.status(400).send({error:"Adminda type bo'lmaydi"});
-            }        
-            type = "notype";     
-        } 
-
-        if(role==="user"){ 
-            if(!type){
-                return res.status(400).send({error:"Userda type bo'lishi shart"});
-            }            
-        } 
+        if (role === "user") {
+            if (!type) {
+                return res.status(400).send({ error: "Userda type bo'lishi shart" });
+            }
+        }
 
         fullName ||= dat.fullName;
         type ||= dat.type;
@@ -328,12 +340,24 @@ async function update(req, res){
         phone ||= dat.phone;
         role ||= dat.role;
 
-        let hahs = bcrypt.hashSync(password, 10);
-        await User.update({fullName, image, email, password:hahs, phone, type, role}, {where:{email:oldemail}});
-        res.status(200).send({success:"updated"});
+        let hash = bcrypt.hashSync(password, 10);
+        await User.update(
+            { fullName, image: newImage, email, password: hash, phone, type, role },
+            { where: { email: oldemail } }
+        );
+
+        // Update muvaffaqiyatli bo'lsa, agar yangi rasm kiritilgan bo'lsa va eski rasm mavjud bo'lsa, uni o'chiramiz
+        if (req.file && oldimage && oldimage !== newImage) {
+            const filePath = `uploadsUser/${oldimage}`;
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        }
+        
+        res.status(200).send({ success: "Updated successfully" });
     } catch (error) {
-        res.status(500).send({error:error.message});
-        console.log({error});
+        res.status(500).send({ error: error.message });
+        console.log({ error });
     }
 }
 
