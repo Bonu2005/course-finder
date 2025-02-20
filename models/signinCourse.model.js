@@ -31,7 +31,12 @@ const SigninCourse = sequelize.define(
             },
             allowNull: false
         },
-    }
+        status:{
+            type:DataTypes.STRING
+        },
+        
+    },
+    {tableName:"signinCourse"}
 )
 User.belongsToMany(Center, { through: SigninCourse, foreignKey: "userId", otherKey: "centerId", onDelete: "CASCADE" })
 Center.belongsToMany(User, { through: SigninCourse, foreignKey: "centerId", otherKey: "userId", onDelete: "CASCADE" })

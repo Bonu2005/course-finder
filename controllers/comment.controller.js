@@ -2,6 +2,7 @@
 import Center from "../models/center.model.js"
 import User from "../models/user.model.js"
 import Comment from "../models/comment.model.js"
+import { commentValidate } from "../validations/comment.validation.js"
 async function findAll(req,res) {
     try {
         const {page =1,pageSize=10,sortBy,sortOrder="ASC"}=req.query
@@ -35,9 +36,11 @@ async function findOne(req,res) {
 }
 async function create(req,res) {
     try {
-      
-    
         let {...data}= req.body
+        let {error}=commentValidate({...data})
+        if(error){
+            return res.status(400).json({message:error.message})
+        }
         let create = await Comment.create({...data})
         res.status(200).json({message:create})
     } catch (error) {
@@ -64,12 +67,11 @@ async function update(req,res) {
 async function remove(req,res) {
     try {
         let {id}= req.params
-        let data= req.body
         let check =await Comment.findByPk(id)
         if(!check){
             return  res.status(404).json({message:"not found this kind of center"})
         }
-        await Comment.destroy(data,{where:{id}})
+        await Comment.destroy(id)
         return  res.status(204).json({message:"Successfully removed"})
     } catch (error) {
         res.status(400).json({message:error.message})

@@ -12,6 +12,7 @@ const ResourseCategory = sequelize.define(
             type: DataTypes.STRING,
             allowNull: false
         },
-    }
+    },
+    {tableName:"resourseCategory"}
 )
 export default ResourseCategory

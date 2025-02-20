@@ -1,6 +1,7 @@
 //Bonu
-import { Op } from "sequelize"
+
 import Subject from "../models/subject.model.js"
+import { subjectValidate } from "../validations/subject.validation.js"
 async function findAll(req,res) {
     try {
         const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
@@ -33,9 +34,11 @@ async function findOne(req,res) {
 }
 async function create(req,res) {
     try {
-      
-    
         let {...data}= req.body
+        let {error}= subjectValidate({...data})
+        if(error){
+            res.status(400).json({message:error.message})
+        }
         let create = await Subject.create({...data})
         res.status(200).json({message:create})
     } catch (error) {
@@ -62,12 +65,11 @@ async function update(req,res) {
 async function remove(req,res) {
     try {
         let {id}= req.params
-        let data= req.body
         let check =await Subject.findByPk(id)
         if(!check){
             return  res.status(404).json({message:"not found this kind of center"})
         }
-        await Subject.destroy(data,{where:{id}})
+        await Subject.destroy(id)
         return  res.status(204).json({message:"Successfully removed"})
     } catch (error) {
         res.status(400).json({message:error.message})

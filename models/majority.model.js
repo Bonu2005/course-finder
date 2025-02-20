@@ -5,12 +5,11 @@ import Subject from "./subject.model.js";
 const Majority = sequelize.define(
     "majority",
     {
-      
       name:{
         type:DataTypes.STRING,
         allowNull:false
       },
-      phone:{
+      photo:{
         type:DataTypes.STRING,
         
       },
@@ -22,7 +21,8 @@ const Majority = sequelize.define(
         },
         allowNull:false
       },
-    }
+    },
+    {tableName:"majority"}
 )
 Majority.belongsTo(Subject,{foreignKey:"subjectId"})
 Subject.hasMany(Majority,{foreignKey:"subjectId"})

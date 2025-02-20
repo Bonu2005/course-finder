@@ -33,13 +33,9 @@ const Center = sequelize.define(
         type:DataTypes.STRING,
         allowNull:false
       },
-      countOfFilial:{
-        type:DataTypes.INTEGER
-      },
-      countOfLIke:{
-        type:DataTypes.INTEGER
-      },
-    }
+
+    },
+    {tableName:"center"}
 )
 Center.belongsTo(User,{foreignKey:"userId"})
 User.hasMany(Center,{foreignKey:"userId"})
