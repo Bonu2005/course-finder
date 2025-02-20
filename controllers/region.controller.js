@@ -1,6 +1,5 @@
 //Bonu
 import Center from "../models/center.model.js"
-
 import Region from "../models/region.model.js"
 import { regionValidate } from "../validations/region.validation.js"
 async function findAll(req,res) {

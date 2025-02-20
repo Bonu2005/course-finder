@@ -3,6 +3,7 @@ import sequelize from "../config/db.js";
 import User from "./user.model.js";
 import Center from "./center.model.js";
 import Majority from "./majority.model.js";
+import Filial from "./filial.model.js";
 
 const SigninCourse = sequelize.define(
     "signinCourse",
@@ -23,10 +24,10 @@ const SigninCourse = sequelize.define(
             },
             allowNull: false
         },
-        centerId: {
+        filialId: {
             type: DataTypes.INTEGER,
             references:{
-                model:Center,
+                model:Filial,
                 key:"id"
             },
             allowNull: false
@@ -38,16 +39,16 @@ const SigninCourse = sequelize.define(
     },
     {tableName:"signinCourse"}
 )
-User.belongsToMany(Center, { through: SigninCourse, foreignKey: "userId", otherKey: "centerId", onDelete: "CASCADE" })
-Center.belongsToMany(User, { through: SigninCourse, foreignKey: "centerId", otherKey: "userId", onDelete: "CASCADE" })
+User.belongsToMany(Filial, { through: SigninCourse, foreignKey: "userId", otherKey: "centerId", onDelete: "CASCADE" })
+Filial.belongsToMany(User, { through: SigninCourse, foreignKey: "centerId", otherKey: "userId", onDelete: "CASCADE" })
 SigninCourse.belongsTo(User, { foreignKey: "userId" })
-SigninCourse.belongsTo(Center, { foreignKey: "centerId" })
+SigninCourse.belongsTo(Filial, { foreignKey: "centerId" })
 
 
 SigninCourse.hasMany(Majority, { foreignKey: "majorityId" })
 Majority.belongsTo(SigninCourse, { foreignKey: "majorityId" })
 User.hasMany(SigninCourse, { foreignKey: "userId" })
-Center.hasMany(SigninCourse, { foreignKey: "centerId" })
+Filial.hasMany(SigninCourse, { foreignKey: "centerId" })
 
 
 

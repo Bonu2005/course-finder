@@ -1,15 +1,32 @@
 import Joi from "joi";
-
-export function userValidate(data) {
+function userValidate(data) {
     let userSchema = Joi.object({
         fullName: Joi.string().required(),
-        image: Joi.string().optional(),
+        image: Joi.string().optional().allow(null),
+        email: Joi.string().required(),
         password: Joi.string().required(),
-        email: Joi.string().email().required(),
         phone: Joi.string().required(),
-        type: Joi.string().required(),
-        role: Joi.string().required()
-    });
-    
-    return userSchema.validate(data, { abortEarly: false });
+        type: Joi.string().optional(),
+        role: Joi.string().optional()
+
+    })
+    return userSchema.validate(data,{abortEarly:false});
 }
+
+
+function usersPatchValidate(data) {
+    let userPatchSchema = Joi.object({
+        fullName: Joi.string().optional(),
+        image: Joi.string().optional().allow(null),
+        email: Joi.string().optional(),
+        password: Joi.string().optional(),
+        phone: Joi.string().optional(),
+        type: Joi.string().optional(),
+        role: Joi.string().optional()
+
+    })
+    return userPatchSchema.validate(data,{abortEarly:false});
+}
+
+
+export { usersPatchValidate, userValidate};

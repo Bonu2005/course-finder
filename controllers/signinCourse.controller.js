@@ -1,5 +1,6 @@
 //Bonu
 import Center from "../models/center.model.js"
+import Filial from "../models/filial.model.js"
 import Majority from "../models/majority.model.js"
 import SigninCourse from "../models/signinCourse.model.js"
 import User from "../models/user.model.js"
@@ -14,7 +15,7 @@ async function findAll(req,res) {
         }
         const where= {}
                 Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
-        let data = await SigninCourse.findAndCountAll({where:where,limit:limit,offset:offset,order:order,include:[{model:User},{model:Majority},{model:Center}]})
+        let data = await SigninCourse.findAndCountAll({where:where,limit:limit,offset:offset,order:order,include:[{model:User},{model:Majority},{model:Filial}]})
         res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
     } catch (error) {
         res.status(400).json({message:error.message})

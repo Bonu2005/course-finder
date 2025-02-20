@@ -42,14 +42,14 @@ async function findOne(req,res) {
 }
 async function create(req,res) {
     try {
-        // if(!req.file){
-        //   return  res.status(404).json({message:"No file uploded"})
-        // }
-        // let {filename}= req.file
+        if(!req.file){
+          return  res.status(404).json({message:"No file uploded"})
+        }
+        let {filename}= req.file
         let {...data}= req.body
         let {error}= filialValidate({...data})
         if(error){
-            // await fs.unlink(`./uploads/${filename}`) 
+            await fs.unlink(`./uploads/${filename}`) 
             res.status(400).json({message:error.message})
         }
         let create = await Filial.create({...data})

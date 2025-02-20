@@ -12,9 +12,11 @@ import { centerValidate } from "../validations/center.validation.js"
 import Majority from "../models/majority.model.js"
 import Subject from "../models/subject.model.js"
 import { log } from "console"
+import { type } from "os"
+
 async function findAll(req,res) {
     try {
-     console.log(req.data);
+     console.log(req.user);
      
         const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
         const limit = parseInt(pageSize)
@@ -47,32 +49,39 @@ async function findOne(req,res) {
         if(!data){
             return  res.status(404).json({message:"not found this kind of center"})
         }
-        res.status(200).json({'likes_count':likes_count,'filials_count':filials_count,'average_rating':averageRating,data,majority})
+        res.status(200).json({'likes_count':likes_count,'filials_count':filials_count,'average_rating':averageRating,data,majority,likes})
     } catch (error) {
         res.status(400).json({message:error.message})
     }
 }
 async function create(req,res) {
     try {
-        // if(!req.file){
-        //   return  res.status(404).json({message:"No file uploded"})
-        // }
-        // let {filename}= req.file
+        if(!req.file){
+          return  res.status(404).json({message:"No file uploded"})
+        }
+        let {filename}= req.file
+        console.log(filename);
+        
         let {majors,...data}= req.body
+        const str = majors;
+        const arr = JSON.parse(str);
+        
         let {error}=centerValidate({...data})
         if(error){
-            // await fs.unlink(`./uploads/${filename}`) 
+            await fs.unlink(`./uploadsMajority/${filename}`) 
             return  res.status(400).json({message:error.message})
         }
         if(!majors){
-            // await fs.unlink(`./uploads/${filename}`) 
+            await fs.unlink(`./uploadsMajority/${filename}`) 
             return  res.status(404).json({message:"MajorId can not be empty"})
         }
         let create = await Center.create({...data})
-        await MajorityItem.bulkCreate(majors.map((oi)=>({centerId:create.id,majorityId:oi})))
+        await MajorityItem.bulkCreate(arr.map((oi)=>({centerId:create.id,majorityId:oi})))
+    
+        
         res.status(200).json({message:create})
     } catch (error) {
-        // await fs.unlink(`./uploads/${filename}`) 
+        // await fs.unlink(`./uploadsMajority/${filename}`) 
         res.status(400).json({message:error.message})
     }
 

@@ -34,17 +34,21 @@ async function findOne(req,res) {
 }
 async function create(req,res) {
     try {
+        if(!req.file){
+            return  res.status(404).json({message:"No file uploded"})
+          }
+          let {filename}= req.file  
         let {...data}= req.body
         let {error}= subjectValidate({...data})
         if(error){
-            res.status(400).json({message:error.message})
+             await fs.unlink(`./uploadsMajority/${filename}`)  
+           return res.status(400).json({message:error.message})
         }
         let create = await Subject.create({...data})
         res.status(200).json({message:create})
     } catch (error) {
         res.status(400).json({message:error.message})
     }
-
 }
 async function update(req,res) {
     try {
