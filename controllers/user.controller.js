@@ -2,7 +2,7 @@ import User from "../models/user.model.js";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import {userValidate, usersPatchValidate} from "../validations/user.validation.js";
-import isGmail from "../validations/email.validation.js";
+import {isGmail, check_phone} from "../validations/emailPhone.validation.js";
 import nodemailer from "nodemailer";
 import otp from 'otplib';
 import jwt from "jsonwebtoken";
@@ -73,6 +73,9 @@ async function register(req, res) {
             return res.status(403).send({error:error.details[0].message});
         }
         let {filename}=req.file
+        if(!check_phone(value.phone)){
+            return res.status(403).send("Phone +998 bilan boshlanishi shart");
+        }
         let hashedPassword = bcrypt.hashSync(value.password, 10);
         value.password=hashedPassword
         let checkemail = await User.findOne({where:{email:value.email}});
@@ -186,6 +189,11 @@ async function create(req, res) {
         
         let image = req.file.filename;
         let {fullName, email, password, phone, type, role} = value;
+
+        if(!check_phone(phone)){
+            return res.status(403).send("Phone +998 bilan boshlanishi shart");
+        }
+           
         if(!isGmail(email)){
             return res.status(403).send("Emailning oxiri @gmail.com bilan tugashi shart");
         }
@@ -276,17 +284,24 @@ async function update(req, res){
         if (image){
                fs.unlinkSync(`uploads/${oldimage}`); 
         }
+
+        if(!check_phone(phone)){
+            return res.status(403).send("Phone +998 bilan boshlanishi shart");
+        }
+
         if(role==="admin"){ 
             if(type){
                 return res.status(403).send({error:"Adminda type bo'lmaydi"});
             }        
             type = "notype";     
         } 
+
         if(role==="user"){ 
             if(!type){
                 return res.status(403).send({error:"Userda type bo'lishi shart"});
             }            
         } 
+
         fullName ||= dat.fullName;
         type ||= dat.type;
         email ||= dat.email;
@@ -324,4 +339,4 @@ async function remove(req, res){
     }
 }
 
-export {send_otp, verify_otp, register, login, findAll, findOne, create, update, remove, send_update_otp}; 
+export {send_otp, verify_otp, register, login, findAll, findOne, create, update, remove, send_update_otp};
