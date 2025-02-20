@@ -4,6 +4,7 @@ import {Router} from 'express';
 import verifyRole from "../middlewares/verifyRole.js";
 import verifyToken from "../middlewares/verifyToken.js";
 import verifySelf from "../middlewares/verifySelf.js";
+import refreshTokens from "../middlewares/refreshToken.js";
 let userRouter = Router();
 
 userRouter.get("/send-otp", send_otp);
@@ -16,5 +17,6 @@ userRouter.post("/",verifyToken,verifyRole(["user"]), upload.single("image"), cr
 userRouter.get("/send-update-otp/:id",verifyToken,verifySelf(["user"]), send_update_otp);
 userRouter.patch("/:otp2/:oldemail", verifyToken,verifyRole(["user"]), upload.single("image"), update);
 userRouter.delete("/:id", verifyToken,verifyRole(["user"]), remove);
+userRouter.post("/refreshToken", verifyToken, refreshTokens);
 
 export default userRouter;

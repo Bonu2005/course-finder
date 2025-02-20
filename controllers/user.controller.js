@@ -1,4 +1,3 @@
-// fullname, image, email, password, phone, type, role
 import User from "../models/user.model.js";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
@@ -6,11 +5,11 @@ import {userValidate, usersPatchValidate} from "../validations/user.validation.j
 import isGmail from "../validations/email.validation.js";
 import nodemailer from "nodemailer";
 import otp from 'otplib';
-dotenv.config();
-otp.totp.options = { step: 1800, digits: 5 };
 import jwt from "jsonwebtoken";
 import path from 'path';
 import fs from "fs";
+dotenv.config();
+otp.totp.options = { step: 1800, digits: 5 };
 
 async function send_otp(req, res) {
     try {
@@ -98,6 +97,22 @@ async function register(req, res) {
     }
 } 
 
+function generateTokens(user) {
+    const accessToken = jwt.sign(
+        { id: user.id, role: user.role, type: user.type }, 
+        process.env.accesstoken, 
+        { expiresIn: "15m" }
+    );
+
+    const refreshToken = jwt.sign(
+        { id: user.id }, 
+        process.env.refreshtoken, 
+        { expiresIn: "7d" } 
+    );
+
+    return { accessToken, refreshToken };
+}
+
 async function login(req, res) {
     try {
         let {email, password} = req.body;
@@ -112,8 +127,15 @@ async function login(req, res) {
         if(!compPass){
             return res.status(403).send("Bu parol xato!");
         }
-        let token = jwt.sign({id:checkemail.id, role:checkemail.role, type:checkemail.type}, process.env.TOKENKEY);
-        res.status(201).send({"Muvaffaqiyatli login!":checkemail, token});
+        const tokens = generateTokens(checkemail);
+
+        res.status(201).send({
+            message: "Muvaffaqiyatli login!",
+            checkemail,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken
+        });
+    
     } catch (error) {
         res.status(403).send({error:error.message});
         console.log({error});
@@ -303,4 +325,3 @@ async function remove(req, res){
 }
 
 export {send_otp, verify_otp, register, login, findAll, findOne, create, update, remove, send_update_otp}; 
-

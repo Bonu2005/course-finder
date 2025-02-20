@@ -11,7 +11,7 @@ if(!token){
     return res.status(403).send({error:"Token not found"});
 } 
 try {
-    let data = jwt.verify(token, process.env.TOKENKEY);
+    let data = jwt.verify(token, process.env.accesstoken);
     if(newData.includes(data.role)||id===data.id){
         req.user = data;
         next();
