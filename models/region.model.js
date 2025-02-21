@@ -8,6 +8,7 @@ const Region = sequelize.define(
             type: DataTypes.STRING,
             allowNull: false
         },
-    }
+    },
+    {tableName:"region"}
 )
 export default Region

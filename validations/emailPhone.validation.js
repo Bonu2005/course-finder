@@ -22,4 +22,4 @@ function check_phone(phone) {
 }
 
     
-export {isGmail, check_phone};
+export {isGmail, check_phone};  

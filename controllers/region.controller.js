@@ -1,10 +1,10 @@
 //Bonu
 import Center from "../models/center.model.js"
-
 import Region from "../models/region.model.js"
+import { regionValidate } from "../validations/region.validation.js"
 async function findAll(req,res) {
     try {
-        const {page =1,pageSize=10,sortBy,sortOrder="ASC"}=req.query
+        const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
         const limit = parseInt(pageSize)
         const offset = (page-1)*limit
         const order = []
@@ -34,26 +34,19 @@ async function findOne(req,res) {
     }
 
 }
-async function findByQuery(req,res) {
-    try {
-        
-    } catch (error) {
-        res.status(400).json({message:error.message})
-    }
-
-}
 async function create(req,res) {
     try {
      
         let {...data}= req.body
-       
+        let {error}=regionValidate({...data})
+        if(error){
+         res.status(400).json({message:error.message})  
+        }
         let create = await Region.create({...data})
         res.status(200).json({message:create})
     } catch (error) {
-     
         res.status(400).json({message:error.message})
     }
-
 }
 async function update(req,res) {
     try {
@@ -74,12 +67,12 @@ async function update(req,res) {
 async function remove(req,res) {
     try {
         let {id}= req.params
-        let data= req.body
+     
         let check =await Region.findByPk(id)
         if(!check){
             return  res.status(404).json({message:"not found this kind of center"})
         }
-        await Region.destroy(data,{where:{id}})
+        await Region.destroy(id)
         
         return  res.status(204).json({message:"Successfully removed"})
     } catch (error) {
@@ -87,4 +80,4 @@ async function remove(req,res) {
     }
 
 }
-export {findAll,findOne,findByQuery,create,update,remove}
+export {findAll,findOne,create,update,remove}

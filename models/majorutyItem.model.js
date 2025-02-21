@@ -7,6 +7,11 @@ import Majority from "./majority.model.js";
 const MajorityItem = sequelize.define(
     "majorityItem",
     {
+        id:{
+            type:DataTypes.INTEGER,
+            autoIncrement:true,
+            primaryKey:true
+        },
         centerId: {
             type: DataTypes.INTEGER,
             references:{
@@ -23,7 +28,8 @@ const MajorityItem = sequelize.define(
             },
             allowNull: false
         },
-    }
+    },
+    {tableName:"majorityItem"}
 )
 Majority.belongsToMany(Center,{through:MajorityItem,foreignKey:"majorityId",otherKey:"centerId",onDelete:"CASCADE"})
 Center.belongsToMany(Majority,{through:MajorityItem,foreignKey:"centerId",otherKey:"majorityId",onDelete:"CASCADE"})

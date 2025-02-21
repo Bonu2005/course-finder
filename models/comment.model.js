@@ -30,7 +30,8 @@ const Comment = sequelize.define(
         },
         allowNull:false
       },
-    }
+    },
+    {tableName:"comment"}
 )
 User.hasMany(Comment,{foreignKey:"userId"})
 Comment.belongsTo(User,{foreignKey:"userId"})

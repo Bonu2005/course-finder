@@ -16,6 +16,7 @@ const Subject = sequelize.define(
             type: DataTypes.STRING,
             allowNull: false
         },
-    }
+    },
+    {tableName:"subject"}
 )
 export default Subject

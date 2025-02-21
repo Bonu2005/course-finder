@@ -15,7 +15,6 @@ dotenv.config();
 otp.totp.options = { step: 600, digits: 5 };
 const usedOtps = new Set();
 
-
 function generateTokens(user) {
     const accessToken = jwt.sign(
         { id: user.id, role: user.role, type: user.type }, 
@@ -33,7 +32,8 @@ function generateTokens(user) {
 }
 
 async function send_otp(req, res) {
-    try {
+    try { 
+        console.log("hi");
         let email = req.body.email;
         if(!isGmail(email)){
             return res.status(400).send({error:"Siz kiritgan email no'tog'ri formatda"});
@@ -46,15 +46,15 @@ async function send_otp(req, res) {
         let secret = email+process.env.OTPKEY;
         let otp1 = otp.totp.generate(secret); 
         const transporter = nodemailer.createTransport({
-            service: "gmail",
+            service: "icloud",
             auth: {
-              user: "yusupovruzimuhammad4@gmail.com",
-              pass: process.env.PAROL,
+              user: "booonu@icloud.com",
+              pass: 'ruwi-csuz-iowu-ggyj',
             },
           });
 
         await transporter.sendMail({
-            from: "<yusupovruzimuhammad4@gmail.com>",
+            from: "<booonu@icloud.com>",
             to: email,
             subject: "Activate your account",  
             html: `<h3>Your otp code: ${otp1}</h3>`,
@@ -70,6 +70,8 @@ async function send_otp(req, res) {
 
 async function verify_otp(req, res) {
     try {
+   
+        
         let {email, otp1} = req.body;
         let secret = email+process.env.OTPKEY;
         let checkOtp = otp.totp.check(otp1,secret);

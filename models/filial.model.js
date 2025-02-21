@@ -38,7 +38,8 @@ const Filial = sequelize.define(
         },
         allowNull:false
       },
-    }
+    },
+    {tableName:"filial"}
 )
 Region.hasMany(Filial,{foreignKey:"regionId"})
 Filial.belongsTo(Region,{foreignKey:"regionId"})

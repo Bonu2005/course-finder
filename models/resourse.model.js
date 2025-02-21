@@ -15,7 +15,7 @@ const Resourse = sequelize.define(
        
       },
       description:{
-        type:DataTypes.INTEGER,
+        type:DataTypes.STRING,
         allowNull:false
       },
       photo:{
@@ -38,7 +38,8 @@ const Resourse = sequelize.define(
         },
         allowNull:false
       },
-    }
+    },
+    {tableName:"resourse"}
 )
 ResourseCategory.hasMany(Resourse,{foreignKey:"resourseCategoryId"})
 Resourse.belongsTo(ResourseCategory,{foreignKey:"resourseCategoryId"})
