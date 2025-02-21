@@ -5,7 +5,7 @@ function userValidate(data) {
         image: Joi.string().optional().allow(null),
         email: Joi.string().required(),
         password: Joi.string().required(),
-        phone: Joi.string().min(13).max(13).required(),
+        phone: Joi.string().min(12).max(12).required(),
         type: Joi.string().optional(),
         role: Joi.string().optional()
     })
@@ -19,7 +19,7 @@ function usersPatchValidate(data) {
         image: Joi.string().optional().allow(null),
         email: Joi.string().optional(),
         password: Joi.string().optional(),
-        phone: Joi.string().min(13).max(13).optional(),
+        phone: Joi.string().min(12).max(12).optional(),
         type: Joi.string().optional(),
         role: Joi.string().optional()
     })

@@ -94,32 +94,37 @@ async function register(req, res) {
         if(error){
             return res.status(400).send({error:error.details[0].message});
         }
+        let {phone, ...rest} = value;
         let {filename}=req.file
-        if(!isGmail(value.email)){
+        if(!isGmail(rest.email)){
             return res.status(400).send({error:"Siz kiritgan email no'tog'ri formatda"});
         }
-        if(!check_phone(value.phone)){
-            return res.status(400).send({error:"Phone +998 bilan boshlanishi shart"});
+
+        let newPhone = check_phone(phone);
+        
+        if(!newPhone){
+            return res.status(400).send({error:"Phone uchun misol: 998567345634"});
         }
-        let hashedPassword = bcrypt.hashSync(value.password, 10);
-        value.password=hashedPassword
-        let checkemail = await tempModel.findOne({where:{email:value.email}});
+
+        let hashedPassword = bcrypt.hashSync(rest.password, 10);
+        rest.password=hashedPassword
+        let checkemail = await tempModel.findOne({where:{email:rest.email}});
         if(!checkemail){
             return res.status(409).send({error:"Bu email tasdiqlanmagan yoki ro'yxatdan o'tib bo'lgan!"});
         }
-        if(value.role==="admin"){
+        if(rest.role==="admin"){
             return res.status(403).send({error:"Admin bo'lib ro'yxatdan o'tish taqiqlanadi."});
         }
-        if(!value.type){
+        if(!rest.type){
             return res.status(400).send({error:"Type bo'lishi shart."});
         }
-        if(value.role==undefined){
-            value.role = "user"
+        if(rest.role==undefined){
+            rest.role = "user"
         }
-        let newUser = await User.create({image:filename,...value});
-        await tempModel.destroy({where:{email:value.email}});
+        let newUser = await User.create({image:filename,phone:newPhone,...rest});
+        await tempModel.destroy({where:{email:rest.email}});
 
-        const tokens = generateTokens(value);
+        const tokens = generateTokens(rest);
 
         res.cookie('refreshToken', tokens.refreshToken, {
         httpOnly: true,
@@ -220,9 +225,11 @@ async function createAdmin(req, res) {
         let image = req.file.filename;
         let {fullName, email, password, phone, type, role} = value;
 
-        if(!check_phone(phone)){
-            return res.status(400).send({error:"Phone +998 bilan boshlanishi shart"});
+        let newPhone = check_phone(phone);
+        if(!newPhone){
+            return res.status(400).send({error:"Phone uchun misol: 998567345634"});
         }
+
            
         if(!isGmail(email)){
             return res.status(400).send({error:"Siz kiritgan email no'tog'ri formatda"});
@@ -243,7 +250,7 @@ async function createAdmin(req, res) {
                 type='notype';
             }
         } 
-        let data = await User.create({fullName, image, email, password:hashPas, phone, type, role});
+        let data = await User.create({fullName, image, email, password:hashPas, phone:newPhone, type, role});
         res.status(201).send({"Admin created successfully!":data});
     } catch (error) {
         res.status(500).send({error:error.message});
@@ -313,9 +320,11 @@ async function update(req, res) {
         let oldimage = dat.dataValues.image;
         let newImage = req.file ? req.file.filename : oldimage;
 
-        if (phone && !check_phone(phone)) {
-            return res.status(400).send({ error: "Phone +998 bilan boshlanishi shart" });
-        }
+        if(phone){
+            let newPhone = check_phone(phone);
+                if(!newPhone){
+                    return res.status(400).send({error:"Phone uchun misol: 998567345634"});
+        }}
 
         if (role === "admin") {
             if (type) {
