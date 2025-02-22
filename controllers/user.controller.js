@@ -12,7 +12,7 @@ import tempModel from "../models/temp.model.js";
 
 import {Op} from "sequelize"
 dotenv.config();
-otp.totp.options = { step: 600, digits: 5 };
+otp.totp.options = { step: 500, digits: 5 };
 const usedOtps = new Set();
 
 function generateTokens(user) {
@@ -36,11 +36,11 @@ async function send_otp(req, res) {
         console.log("hi");
         let email = req.body.email;
         if(!isGmail(email)){
-            return res.status(400).send({error:"Siz kiritgan email no'tog'ri formatda"});
+            return res.status(400).send({error:"The email you entered is in an incorrect format"});
         }
         let data = await User.findOne({where:{email}});
         if(data){
-            return res.status(409).send({error:"Bu email allqachon ro'yxatdan o'tib bo'lgan!"});
+            return res.status(409).send({error:"This email is already registered!"});
         }
         
         let secret = email+process.env.OTPKEY;
@@ -79,7 +79,7 @@ async function verify_otp(req, res) {
         if(!checkOtp){
             return res.status(400).send({error:"Wrong otp!"});
         }
-        res.status(200).send({success:"Virified successfully!"});
+        res.status(200).send({success:"Verified successfully!"});
         await tempModel.create({email});
     } catch (error) {
         res.status(500).send({error:error.message});
@@ -96,32 +96,37 @@ async function register(req, res) {
         if(error){
             return res.status(400).send({error:error.details[0].message});
         }
+        let {phone, ...rest} = value;
         let {filename}=req.file
-        if(!isGmail(value.email)){
-            return res.status(400).send({error:"Siz kiritgan email no'tog'ri formatda"});
+        if(!isGmail(rest.email)){
+            return res.status(400).send({error:"The email you entered is in an incorrect format"});
         }
-        if(!check_phone(value.phone)){
-            return res.status(400).send({error:"Phone +998 bilan boshlanishi shart"});
-        }
-        let hashedPassword = bcrypt.hashSync(value.password, 10);
-        value.password=hashedPassword
-        let checkemail = await tempModel.findOne({where:{email:value.email}});
-        if(!checkemail){
-            return res.status(409).send({error:"Bu email tasdiqlanmagan yoki ro'yxatdan o'tib bo'lgan!"});
-        }
-        if(value.role==="admin"){
-            return res.status(403).send({error:"Admin bo'lib ro'yxatdan o'tish taqiqlanadi."});
-        }
-        if(!value.type){
-            return res.status(400).send({error:"Type bo'lishi shart."});
-        }
-        if(value.role==undefined){
-            value.role = "user"
-        }
-        let newUser = await User.create({image:filename,...value});
-        await tempModel.destroy({where:{email:value.email}});
 
-        const tokens = generateTokens(value);
+        let newPhone = check_phone(phone);
+        
+        if(!newPhone){
+            return res.status(400).send({error:"Example for phone: 998567345634"});
+        }
+
+        let hashedPassword = bcrypt.hashSync(rest.password, 10);
+        rest.password=hashedPassword
+        let checkemail = await tempModel.findOne({where:{email:rest.email}});
+        if(!checkemail){
+            return res.status(409).send({error:"This email is not verified or has already been registered!"});
+        }
+        if(rest.role==="admin"){
+            return res.status(403).send({error:"Registering as an admin is not allowed."});
+        }
+        if(!rest.type){
+            return res.status(400).send({error:"Type is required."});
+        }
+        rest.type = rest.type.toUpperCase();
+        rest.role = rest.role ? rest.role.toUpperCase() : "USER";
+        
+        let newUser = await User.create({image:filename,phone:newPhone,...rest});
+        await tempModel.destroy({where:{email:rest.email}});
+
+        const tokens = generateTokens(rest);
 
         res.cookie('refreshToken', tokens.refreshToken, {
         httpOnly: true,
@@ -131,7 +136,7 @@ async function register(req, res) {
     });
 
     res.status(200).send({
-        message: "Muvaffaqiyatli registratsiya!",
+        message: "Successful registration!",
         newUser,
         accessToken: tokens.accessToken
 });
@@ -146,15 +151,15 @@ async function login(req, res) {
     try {
         let {email, password} = req.body;
         if(!isGmail(email)){
-            return res.status(400).send({error:"Siz kiritgan email no'tog'ri formatda"});
+            return res.status(400).send({error:"The email you entered is in an incorrect format"});
         }
         let checkemail = await User.findOne({where:{email}});
         if(!checkemail){
-            return res.status(404).send({error:"Bu email ro'yxatdan o'tmagan yoki noto'g'ri!"});
+            return res.status(404).send({error:"This email is not registered or is incorrect!"});
         }
         let compPass = bcrypt.compareSync(password, checkemail.password);
         if(!compPass){
-            return res.status(401).send({error:"Bu parol xato!"});
+            return res.status(401).send({error:"This password is incorrect!"});
         }
         const tokens = generateTokens(checkemail);
 
@@ -166,7 +171,7 @@ async function login(req, res) {
         });
 
         res.status(200).send({
-            message: "Muvaffaqiyatli login!",
+            message: "Successful login!",
             checkemail,
             accessToken: tokens.accessToken
         });
@@ -190,7 +195,7 @@ async function findAll(req,res) {
                 Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
         let data = await User.findAndCountAll({where:where,limit:limit,offset:offset,order:order});
         if(!data){
-            return res.status(400).json({error:"Hozircha userlar yo'q!"})
+            return res.status(400).json({error:"There are no users at the moment!"})
         }
         res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
     } catch (error) {
@@ -203,9 +208,9 @@ async function findOne(req, res) {
         let {id} = req.params;
         let data = await User.findOne({where:{id}});
         if(!data){
-            return res.status(404).send({error:"User topilmadi!"});
+            return res.status(404).send({error:"User not found!"});
         }
-        return res.status(200).send({"Malumot":data});
+        return res.status(200).send({"Data":data});
     } catch (error) {
         res.status(500).send({error:error.message});
         console.log({error});
@@ -222,30 +227,35 @@ async function createAdmin(req, res) {
         let image = req.file.filename;
         let {fullName, email, password, phone, type, role} = value;
 
-        if(!check_phone(phone)){
-            return res.status(400).send({error:"Phone +998 bilan boshlanishi shart"});
+        let newPhone = check_phone(phone);
+        if(!newPhone){
+            return res.status(400).send({error:"Example for phone: 998567345634"});
         }
+
+        if(type){
+        type = type.toUpperCase();}
+        role = role ? role.toUpperCase() : "USER";
            
         if(!isGmail(email)){
-            return res.status(400).send({error:"Siz kiritgan email no'tog'ri formatda"});
+            return res.status(400).send({error:"The email you entered is in an incorrect format"});
         }
         let checkemail = await User.findOne({where:{email}});
         if(checkemail){
-            return res.status(409).send({error:"Bu email ro'yxatdan o'tib bo'lgan!"});
+            return res.status(409).send({error:"This email is already registered!"});
         }
         let hashPas = bcrypt.hashSync(password, 10);
-        if(role==="user"&&role!=="admin"){
-            return res.status(403).send({error:"Faqat admin yaratish mumkin"});
+        if(role==="USER"&&role!=="ADMIN"){
+            return res.status(403).send({error:"It is only possible to create an admin"});
         }
-        if(role==="admin"){
+        if(role==="ADMIN"){
             if(type){
-                return res.status(400).send({error:"Adminda type bo'lmaydi"});
+                return res.status(400).send({error:"Admin does not have a type."});
             }
             if(type==undefined){
-                type='notype';
+                type='NOTYPE';
             }
         } 
-        let data = await User.create({fullName, image, email, password:hashPas, phone, type, role});
+        let data = await User.create({fullName, image, email, password:hashPas, phone:newPhone, type, role});
         res.status(201).send({"Admin created successfully!":data});
     } catch (error) {
         res.status(500).send({error:error.message});
@@ -258,11 +268,11 @@ async function send_update_otp(req, res) {
         let {id} = req.params;
         let email = req.body.email;
         if(!isGmail(email)){
-            return res.status(400).send({error:"Siz kiritgan email no'tog'ri formatda"});
+            return res.status(400).send({error:"The email you entered is in an incorrect format."});
         }
         let data = await User.findOne({where:{id,email}});
         if(!data){
-            return res.status(404).send({error:"Noto'gri email yoki id kiritdingiz"});
+            return res.status(404).send({error:"You entered an incorrect email or ID."});
         }
         
         let secret = email+process.env.OTPKALIT;
@@ -281,7 +291,7 @@ async function send_update_otp(req, res) {
             subject: "Activate your account",  
             html: `<h3>Your otp code: ${otp2}</h3>`,
           });
-          res.status(200).send({success:"Please verify otp code, to update your datas!"});
+          res.status(200).send({success:"Please verify the OTP code to update your data!"});
 
     } catch (error) {
         res.status(500).send({error:error.message});
@@ -300,50 +310,53 @@ async function update(req, res) {
         let secret = oldemail + process.env.OTPKALIT;
 
         if (usedOtps.has(otp2)) {
-            return res.status(400).send({ error: "Bu otp ishlatilgan, qaytadan otp oling" });
+            return res.status(400).send({ error: "This OTP has been used, please request a new OTP." });
         }
         if (!otp.totp.check(otp2, secret)) {
-            return res.status(400).send({ error: "Noto'g'ri otp!" });
+            return res.status(400).send({ error: "Incorrect OTP!" });
         }
         usedOtps.add(otp2);
 
         let dat = await User.findOne({ where: { email: oldemail } });
         if (!dat) {
-            return res.status(404).send({ error: "Foydalanuvchi topilmadi." });
+            return res.status(404).send({ error: "User not found." });
         }
 
         let oldimage = dat.dataValues.image;
         let newImage = req.file ? req.file.filename : oldimage;
 
-        if (phone && !check_phone(phone)) {
-            return res.status(400).send({ error: "Phone +998 bilan boshlanishi shart" });
-        }
-
-        if (role === "admin") {
-            if (type) {
-                return res.status(400).send({ error: "Adminda type bo'lmaydi" });
+        if(phone){
+            phone = check_phone(phone);
+                if(!phone){
+                    return res.status(400).send({error:"Example for phone: 998567345634"});
+        }}
+        if(role){
+        role = role ? role.toUpperCase() : "USER";
+            if (role === "ADMIN") {
+                if (type) {
+                    return res.status(400).send({ error: "Admin does not have a type." });
             }
-            type = "notype";
-        }
-
-        if (role === "user") {
+                type = "NOTYPE";
+        }}
+        if (role === "USER") {
             if (!type) {
-                return res.status(400).send({ error: "Userda type bo'lishi shart" });
+                return res.status(400).send({ error: "A user must have a type." });
             }
+            type = type.toUpperCase();
         }
+
+        
 
         fullName ||= dat.fullName;
         type ||= dat.type;
         email ||= dat.email;
+        phone ||= dat.phone
         password ||= dat.password;
-        phone ||= dat.phone;
         role ||= dat.role;
 
         let hash = bcrypt.hashSync(password, 10);
         await User.update(
-            { fullName, image: newImage, email, password: hash, phone, type, role },
-            { where: { email: oldemail } }
-        );
+            { fullName, image: newImage, email, password: hash, phone, type, role },{ where: { email: oldemail } });
 
         if (req.file && oldimage && oldimage !== newImage) {
             const filePath = `uploadsUser/${oldimage}`;
@@ -352,7 +365,7 @@ async function update(req, res) {
             }
         }
         
-        res.status(200).send({ success: "Updated successfully" });
+        res.status(200).send({ success: "Updated successfully!" });
     } catch (error) {
         res.status(500).send({ error: error.message });
         console.log({ error });
@@ -364,7 +377,7 @@ async function remove(req, res){
         let {id} = req.params; 
         let dat = await User.findOne({where:{id}});
         if(!dat){
-            res.status(400).send({error:"Foydalanuvchi topilmadi."});
+            res.status(400).send({error:"User not found."});
         }  
         if (dat.image) {
             let imagePath = path.join("uploadsUser", dat.image);
@@ -383,7 +396,7 @@ async function remove(req, res){
 async function logout(req, res) {
     try {
         res.clearCookie('refreshToken');
-        res.status(200).send({success:"Siz tizimdan chiqib ketdingiz"});
+        res.status(200).send({success:"You have logged out."});
     } catch (error) {
         res.status(500).send({error:error.message});
         console.log({error});

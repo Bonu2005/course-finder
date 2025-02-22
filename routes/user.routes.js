@@ -8,28 +8,17 @@ import refreshTokens from "../middlewares/refreshToken.js";
 let userRouter = Router();
 
 userRouter.post("/send-otp", send_otp);
-
 userRouter.post("/verify-otp", verify_otp);
-
 userRouter.post("/register", upload.single("image"), register);
-
 userRouter.post("/login", login);
-
 userRouter.get("/", verifyToken, findAll);
-
-userRouter.get("/:id", verifyToken,verifyRole(["user"]), findOne);
-
-userRouter.post("/", verifyToken, verifyRole(["user"]), upload.single("image"), createAdmin);
-
-userRouter.get("/send-update-otp/:id", verifyToken, verifySelf(["user"]), send_update_otp);
-
-
-userRouter.patch("/:otp2/:oldemail", verifyToken, verifyRole(["user"]), upload.single("image"), update);
-
-userRouter.delete("/:id", verifyToken, verifyRole(["user"]), remove);
-
+userRouter.get("/:id", verifyToken,verifyRole(["USER"]), findOne);
+userRouter.post("/", verifyToken, verifyRole(["USER"]), upload.single("image"), createAdmin);
+userRouter.post("/send-update-otp/:id", verifyToken, verifySelf(["USER"]), send_update_otp)
+userRouter.patch("/:otp2/:oldemail", verifyToken, verifyRole(["USER"]), upload.single("image"), update);
+userRouter.delete("/:id", verifyToken, verifyRole(["USER"]), remove);
+userRouter.post("/:id", verifyToken, refreshTokens);
 userRouter.post("/logout", verifyToken, logout);
-
 userRouter.post("/:id", verifyToken, refreshTokens);
 
 
