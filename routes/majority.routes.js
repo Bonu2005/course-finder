@@ -16,4 +16,5 @@ majorityRouter.post("/",verifyToken,verifyRole('admin'), upload.single("photo"),
 majorityRouter.patch("/:id",verifyToken,verifyRole('admin'), upload.single("photo"), update);
 
 majorityRouter.delete("/:id",verifyToken,verifyRole('admin'), remove);
+
 export default majorityRouter

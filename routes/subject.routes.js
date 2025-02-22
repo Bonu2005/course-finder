@@ -6,14 +6,14 @@ import verifyRole from "../middlewares/verifyRole.js";
 
 const subjectRouter = Router()
 
-
 subjectRouter.get("/", findAll);
 
 subjectRouter.get("/:id", findOne);
 
 subjectRouter.post("/",verifyToken,verifyRole(['admin']), upload.single("photo"), create);
 
-subjectRouter.patch("/:id",verifyToken,verifyToken(['ceo','admin']), upload.single("photo"), update);
+subjectRouter.patch("/:id",verifyToken,verifyRole(['ceo','admin']), upload.single("photo"), update);
 
 subjectRouter.delete("/:id",verifyToken,verifyRole('admin'), remove);
+
 export default subjectRouter

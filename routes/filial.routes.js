@@ -142,73 +142,7 @@ filialRouter.get("/:id", verifyToken, verifyRole(["admin"]),findOne)
  */
 filialRouter.post("/", verifyToken, verifyRole(["admin"]), verifyType(["ceo"]), upload.single("photo"), create);
 
-/**
- * @swagger
- * /filial/{id}:
- *   patch:
- *     summary: Filialni yangilash
- *     description: Berilgan IDga asoslanib filialni yangilash.
- *     tags:
- *       - Filial
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         description: Filialning IDsi
- *         type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               location:
- *                 type: string
- *                 description: Filialning yangi joylashuvi
- *               photo:
- *                 type: string
- *                 format: binary
- *                 description: Filialning yangi rasmi
- *               phone:
- *                 type: string
- *                 description: Filialning yangi telefon raqami
- *               address:
- *                 type: string
- *                 description: Filialning yangi manzili
- *     responses:
- *       200:
- *         description: Filial muvaffaqiyatli yangilandi
- *       400:
- *         description: Yomon so'rov
- *       404:
- *         description: Filial topilmadi
- *       500:
- *         description: Server xatosi
- */
 filialRouter.patch("/:id", verifyToken, verifyRole(["admin"]), verifyType(["ceo"]), upload.single("photo"), update);
 
-/**
- * @swagger
- * /filial/{id}:
- *   delete:
- *     summary: Filialni o'chirish
- *     description: Berilgan IDga asoslanib filialni o'chirish.
- *     tags:
- *       - Filial
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         description: O'chirilishi kerak bo'lgan filialning IDsi
- *         type: integer
- *     responses:
- *       200:
- *         description: Filial muvaffaqiyatli o'chirildi
- *       404:
- *         description: Filial topilmadi
- *       500:
- *         description: Server xatosi
- */
 filialRouter.delete("/:id", verifyToken, verifyRole(["admin"]), verifyType(["ceo"]), remove)
 export default filialRouter
