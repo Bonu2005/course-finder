@@ -30,7 +30,7 @@ function verifyToken(req, res, next) {
           });
  
     } catch (error) {
-       return res.status(401).send({ msg: "Invalid token" });
+       res.status(401).send({ msg: "Invalid token" });
     }
  }
  
