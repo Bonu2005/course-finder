@@ -7,7 +7,7 @@ const Majority = sequelize.define(
     {
       name:{
         type:DataTypes.STRING,
-        allowNull:false
+       
       },
       photo:{
         type:DataTypes.STRING,
@@ -19,7 +19,6 @@ const Majority = sequelize.define(
           model:Subject,
           key:"id"
         },
-        allowNull:false
       },
     },
     {tableName:"majority"}

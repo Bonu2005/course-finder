@@ -6,7 +6,7 @@ const Subject = sequelize.define(
     {
         name: {
             type: DataTypes.STRING,
-            allowNull: false
+    
         },
         photo: {
             type: DataTypes.STRING,
@@ -14,7 +14,7 @@ const Subject = sequelize.define(
         },
         type: {
             type: DataTypes.STRING,
-            allowNull: false
+    
         },
     },
     {tableName:"subject"}

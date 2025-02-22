@@ -3,40 +3,40 @@ import sequelize from "../config/db.js";
 import Region from "./region.model.js";
 import User from "./user.model.js";
 
-const Center = sequelize.define(
-    "center",
-    {
-      name:{
-        type:DataTypes.STRING,
-        allowNull:false
-      },
-      photo:{
-        type:DataTypes.STRING,
-      },
-      userId:{
-        type:DataTypes.INTEGER,
-        references:{
-          model:User,
-          key:"id"
+  const Center = sequelize.define(
+      "center",
+      {
+        name:{
+          type:DataTypes.STRING,
+         
         },
-        allowNull:false
-      },
-      regionId:{
-        type:DataTypes.INTEGER,
-        references:{
-          model:Region,
-          key:"id"
+        photo:{
+          type:DataTypes.STRING,
         },
-        allowNull:false
-      },
-      address:{
-        type:DataTypes.STRING,
-        allowNull:false
-      },
+        userId:{
+          type:DataTypes.INTEGER,
+          references:{
+            model:User,
+            key:"id"
+          },
+          
+        },
+        regionId:{
+          type:DataTypes.INTEGER,
+          references:{
+            model:Region,
+            key:"id"
+          },
+         
+        },
+        address:{
+          type:DataTypes.STRING,
+          
+        },
 
-    },
-    {tableName:"center"}
-)
+      },
+      {tableName:"center"}
+  )
 Center.belongsTo(User,{foreignKey:"userId"})
 User.hasMany(Center,{foreignKey:"userId"})
 Center.belongsTo(Region,{foreignKey:"regionId"})

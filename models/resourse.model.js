@@ -8,7 +8,7 @@ const Resourse = sequelize.define(
     {
       name:{
         type:DataTypes.STRING,
-        allowNull:false
+     
       },
       media:{
         type:DataTypes.STRING,
@@ -16,11 +16,11 @@ const Resourse = sequelize.define(
       },
       description:{
         type:DataTypes.STRING,
-        allowNull:false
+  
       },
       photo:{
         type:DataTypes.STRING,
-        allowNull:false
+    
       },
       userId:{
         type:DataTypes.INTEGER,
@@ -28,7 +28,7 @@ const Resourse = sequelize.define(
           model:User,
           key:"id"
         },
-        allowNull:false
+
       },
       resourseCategoryId:{
         type:DataTypes.INTEGER,
@@ -36,7 +36,7 @@ const Resourse = sequelize.define(
           model:ResourseCategory,
           key:"id"
         },
-        allowNull:false
+
       },
     },
     {tableName:"resourse"}

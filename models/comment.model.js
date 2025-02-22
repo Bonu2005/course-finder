@@ -8,7 +8,7 @@ const Comment = sequelize.define(
     {
       msg_text:{
         type:DataTypes.STRING,
-        allowNull:false
+        
       },
       userId:{
         type:DataTypes.INTEGER,
@@ -16,11 +16,11 @@ const Comment = sequelize.define(
         model:User,
         key:"id"
         },
-        allowNull:false
+        
       },
       star:{
         type:DataTypes.INTEGER,
-        allowNull:false
+     
       },
       centerId:{
         type:DataTypes.INTEGER,
@@ -28,7 +28,7 @@ const Comment = sequelize.define(
          model:Center,
          key:"id"
         },
-        allowNull:false
+       
       },
     },
     {tableName:"comment"}

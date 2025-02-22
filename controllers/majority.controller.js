@@ -86,7 +86,7 @@ async function create(req,res) {
         let create = await Majority.create({photo:filename,...data})
         res.status(200).json({message:create})
     } catch (error) {
-        // await fs.unlink(`uploadsMajority/${filename}`) 
+        
         res.status(400).json({message:error.message})
     }
 

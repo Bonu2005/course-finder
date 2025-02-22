@@ -5,7 +5,7 @@ import Comment from "../models/comment.model.js"
 import { commentValidate } from "../validations/comment.validation.js"
 async function findAll(req,res) {
     try {
-        const {page =1,pageSize=10,sortBy,sortOrder="ASC"}=req.query
+        const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
         const limit = parseInt(pageSize)
         const offset = (page-1)*limit
         const order = []
@@ -14,7 +14,7 @@ async function findAll(req,res) {
         }
         const where= {}
                 Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
-        let data = await Comment.findAndCountAll({where:where,limit:limit,offset:offset,order:order,include:[{model:User},{model:Center}]})
+        let data = await Comment.findAndCountAll({where:where,limit:limit,offset:offset,order:order,include:[{model:User ,attributes: ['fullName', 'image','phone','type']},{model:Center}]})
 
         res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
     } catch (error) {
@@ -25,9 +25,9 @@ async function findAll(req,res) {
 async function findOne(req,res) {
     try {
         let {id}= req.params
-        let findOne= await Comment.findByPk(id,{include:[{model:User},{model:Center}]})
+        let findOne= await Comment.findByPk(id,{include:[{model:User,attributes: ['fullName', 'image','phone','type']},{model:Center}]})
         if(!findOne){
-            return  res.status(404).json({message:"not found this kind of center"})
+            return  res.status(404).json({message:"not found this kind of comment"})
         }
         res.json(300).json(findOne)
     } catch (error) {
@@ -41,7 +41,7 @@ async function create(req,res) {
         if(error){
             return res.status(400).json({message:error.message})
         }
-        let create = await Comment.create({...data})
+        let create = await Comment.create({userId:req.user.id,...data})
         res.status(200).json({message:create})
     } catch (error) {
         res.status(400).json({message:error.message})
@@ -68,11 +68,14 @@ async function remove(req,res) {
     try {
         let {id}= req.params
         let check =await Comment.findByPk(id)
+        console.log(check);
+        
+        
         if(!check){
             return  res.status(404).json({message:"not found this kind of center"})
         }
-        await Comment.destroy(id)
-        return  res.status(204).json({message:"Successfully removed"})
+        await Comment.destroy({where:{id:id}})
+        return  res.status(200).json({message:"Successfully removed"})
     } catch (error) {
         res.status(400).json({message:error.message})
     }

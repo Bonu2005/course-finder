@@ -9,9 +9,10 @@ import MajorityItem from "../models/majorutyItem.model.js"
 import Majority from "../models/majority.model.js"
 import Subject from "../models/subject.model.js"
 import User from "../models/user.model.js"
+import { log } from "util"
 async function findAll(req,res) {
     try {
-        const {page =1,pageSize=10,sortBy,sortOrder="ASC"}=req.query
+        const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
         const limit = parseInt(pageSize)
         const offset = (page-1)*limit
         const order = []
@@ -46,19 +47,20 @@ async function create(req,res) {
           return  res.status(404).json({message:"No file uploded"})
         }
         let {filename}= req.file
+        console.log(filename);
+        
         let {...data}= req.body
         let {error}= filialValidate({...data})
         if(error){
-            await fs.unlink(`./uploads/${filename}`) 
+             fs.unlink(`uploadsCenter/${filename}`) 
             res.status(400).json({message:error.message})
         }
-        let create = await Filial.create({...data})
+        let create = await Filial.create({photo:filename,userId:req.user.id,...data})
         res.status(200).json({message:create})
     } catch (error) {
-        await fs.unlink(`./uploads/${filename}`) 
+        
         res.status(400).json({message:error.message})
     }
-
 }
 async function update(req,res) {
     try {
@@ -68,7 +70,7 @@ async function update(req,res) {
         if(!check){
             return  res.status(404).json({message:"not found this kind of center"})
         }
-        await Filial.update(data,{where:{id}})
+        await Filial.update(data,{where:{id:id}})
         return  res.status(204).json({message:"Successfully updated"})
     } catch (error) {
         
@@ -83,8 +85,8 @@ async function remove(req,res) {
         if(!check){
             return  res.status(404).json({message:"not found this kind of center"})
         }
-        await Filial.destroy(id)
-        await fs.unlink(`./uploads/${check.dataValues.photo}`) 
+        await Filial.destroy({where:{id:id}})
+        await fs.unlink(`uploads/${check.dataValues.photo}`) 
         return  res.status(204).json({message:"Successfully removed"})
     } catch (error) {
         res.status(400).json({message:error.message})

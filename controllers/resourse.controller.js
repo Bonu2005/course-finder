@@ -49,7 +49,7 @@ async function create(req,res) {
         let create = await Resourse.create({...data})
         res.status(200).json({message:create})
     } catch (error) {
-        await fs.unlink(`./uploads/${filename}`) 
+       
         res.status(400).json({message:error.message})
     }
 }

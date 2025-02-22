@@ -4,7 +4,7 @@ export function centerValidate(data) {
     let centerSchema = Joi.object({
         name: Joi.string().required(),
         photo: Joi.string().optional(),
-        userId:Joi.number().required(),
+        userId:Joi.number().optional(),
         regionId: Joi.number().required(),
         address: Joi.string().required()
     });

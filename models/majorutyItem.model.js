@@ -18,7 +18,7 @@ const MajorityItem = sequelize.define(
                 model:Center,
                 key:"id"
             },
-            allowNull: false
+            
         },
         majorityId: {
             type: DataTypes.INTEGER,
@@ -26,7 +26,7 @@ const MajorityItem = sequelize.define(
                 model:Majority,
                 key:"id"
             },
-            allowNull: false
+            
         },
     },
     {tableName:"majorityItem"}

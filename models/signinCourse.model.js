@@ -14,7 +14,7 @@ const SigninCourse = sequelize.define(
                 model:User,
                 key:"id"
             },
-            allowNull: false
+         
         },
         majorityId: {
             type: DataTypes.INTEGER,
@@ -22,7 +22,7 @@ const SigninCourse = sequelize.define(
                 model:Majority,
                 key:"id"
             },
-            allowNull: false
+       
         },
         filialId: {
             type: DataTypes.INTEGER,
@@ -30,7 +30,7 @@ const SigninCourse = sequelize.define(
                 model:Filial,
                 key:"id"
             },
-            allowNull: false
+           
         },
         status:{
             type:DataTypes.STRING

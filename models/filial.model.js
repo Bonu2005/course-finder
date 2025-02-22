@@ -8,7 +8,7 @@ const Filial = sequelize.define(
     {
       location:{
         type:DataTypes.STRING,
-        allowNull:false
+        
       },
       photo:{
         type:DataTypes.STRING,
@@ -20,15 +20,15 @@ const Filial = sequelize.define(
         model:Region,
         key:"id"
       },
-        allowNull:false
+      
       },
       phone:{
         type:DataTypes.STRING,
-        allowNull:false
+       
       },
       address:{
         type:DataTypes.STRING,
-        allowNull:false
+        
       },
       centerId:{
         type:DataTypes.INTEGER,
@@ -36,7 +36,7 @@ const Filial = sequelize.define(
          model:Center,
          key:"id"
         },
-        allowNull:false
+        
       },
     },
     {tableName:"filial"}

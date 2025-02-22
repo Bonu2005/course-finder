@@ -13,11 +13,10 @@ app.use("/",mainRouter)
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 async function dbConnection() {
-    await sequelize.sync()
+    await sequelize.sync({force:true})
     console.log("mysql connected");
     app.listen(process.env.PORT,()=>{
         console.log(`server is run on port ${process.env.PORT}`);
     })
 }
-
 dbConnection()

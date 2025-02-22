@@ -2,7 +2,7 @@ import Joi from "joi";
 
 export function likeValidate(data) {
     let likeSchema = Joi.object({
-        userId: Joi.number().required(),
+        userId: Joi.number().optional(),
         centerId: Joi.number().required()
     });
     

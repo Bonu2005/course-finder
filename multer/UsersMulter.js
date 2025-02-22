@@ -6,7 +6,7 @@ const rasmUpload = multer.diskStorage({
         cb(null, `${Date.now()}${path.extname(file.originalname)}`)
     },
     destination: (req, file, cb) => {
-        cb(null, "./uploadsUser");
+        cb(null, "uploadsUser");
     },
 });
 

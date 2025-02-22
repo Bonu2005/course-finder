@@ -9,7 +9,7 @@ import jwt from "jsonwebtoken";
 import path from 'path';
 import fs from "fs";
 import tempModel from "../models/temp.model.js";
-import { Sequelize } from "sequelize";
+
 import {Op} from "sequelize"
 dotenv.config();
 otp.totp.options = { step: 600, digits: 5 };

@@ -42,12 +42,12 @@ async function create(req,res) {
         let {error}= resourseCategoryValidate({...data})
         if(error){
             await fs.unlink(`./uploads/${filename}`) 
-            res.status(400).json({message:error.message})
+          return  res.status(400).json({message:error.message})
         }
         let create = await ResourseCategory.create({...data})
         res.status(200).json({message:create})
     } catch (error) {
-        await fs.unlink(`./uploads/${filename}`) 
+       
         res.status(400).json({message:error.message})
     }
 

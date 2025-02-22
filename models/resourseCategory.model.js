@@ -6,11 +6,11 @@ const ResourseCategory = sequelize.define(
     {
         name: {
             type: DataTypes.STRING,
-            allowNull: false
+         
         },
         photo: {
             type: DataTypes.STRING,
-            allowNull: false
+        
         },
     },
     {tableName:"resourseCategory"}

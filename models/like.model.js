@@ -12,7 +12,7 @@ const Like = sequelize.define(
           model:User,
           key:"id"
         },
-        allowNull:false
+      
       },
       centerId:{
         type:DataTypes.INTEGER,
@@ -20,7 +20,6 @@ const Like = sequelize.define(
           model:Center,
           key:"id"
         },
-        allowNull:false
       },
     },
     {tableName:"`layk`"}

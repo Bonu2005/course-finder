@@ -16,7 +16,7 @@ if (token.startsWith("Bearer ")) {
 
 try {
     let data = jwt.verify(token, process.env.accesstoken);
-    if(newData.includes(data.type)){
+    if(newData.includes(data.type) || newData.includes(data.role)){
         req.user = data;
         next();
     }else{
