@@ -3,7 +3,7 @@ import { create, findAll, findOne, remove, update } from "../controllers/subject
 import verifyRole from "../middlewares/verifyRole.js";
 import verifyToken from "../middlewares/verifyToken.js";
 import upload from "../multer/multerMajority.js";
-
+const subjectRouter = Router()
 subjectRouter.get("/",findAll)
 
 
@@ -11,7 +11,7 @@ subjectRouter.get("/",findAll)
 
 
 
-const subjectRouter = Router()
+
 
 /**
  * @swagger

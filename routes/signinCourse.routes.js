@@ -4,7 +4,8 @@ import verifyRole from "../middlewares/verifyRole.js";
 import verifyToken from "../middlewares/verifyToken.js";
 
 const signinCourseRouter = Router()
-import { create, findAll, finish} from "../controllers/signinCourse.controller.js";
+
+
 
 /**
  * @swagger

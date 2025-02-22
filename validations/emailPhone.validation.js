@@ -4,7 +4,7 @@ function isGmail(email) {
 
 function check_phone(phone) {
   try {
-      if(!/^\d{12}$/.test(phone)) {
+      if(!/^\d[0-9]{11}$/.test(phone)) {
           throw new Error("Telefon raqam noto'g'ri!");
       }
 
