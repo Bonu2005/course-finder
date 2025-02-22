@@ -6,219 +6,160 @@ import verifyRole from "../middlewares/verifyRole.js";
 import verifyType from "../middlewares/verifyType.js";
 
 const centerRouter = Router()
+
+centerRouter.get("/",verifyToken,verifyType(['ADMIN','CEO']), findAll);
+
+centerRouter.get("/:id",verifyToken,verifyType(['ADMIN','CEO']), findOne);
+
+centerRouter.post("/",verifyToken,verifyType(["CEO"]),upload.single("photo"), create);
+
+centerRouter.patch("/:id", verifyType(["CEO"]),upload.single("photo"), update);
+
+centerRouter.delete("/:id",verifyType(["CEO"]) ,remove);
+
+export default centerRouter
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Center
+ *     description: Center bilan bog'liq barcha amallars
+ */
+
 /**
  * @swagger
  * /center:
  *   get:
- *     summary: "Barcha markazlarni olish"
- *     description: "Markazlarni filtrlash, saralash va sahifalash orqali olish."
+ *     summary: "Markazlar ro'yxatini olish"
+ *     description: "Bu so'rov markazlar ro'yxatini qaytaradi. Paginatsiya, saralash va filtratsiya parametrlari qo'llab-quvvatlanadi."
+ *     operationId: getCenters
  *     tags:
  *       - Center
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
  *         required: false
+ *         description: "Olingan sahifa raqami. Default: 1."
  *         schema:
  *           type: integer
- *           default: 1
- *         description: "Sahifa raqami (default: 1)"
  *       - in: query
  *         name: pageSize
  *         required: false
+ *         description: "Sahifadagi elementlar soni. Default: 10."
  *         schema:
  *           type: integer
- *           default: 10
- *         description: "Har bir sahifadagi elementlar soni (default: 10)"
  *       - in: query
  *         name: sortBy
  *         required: false
+ *         description: "Saralash uchun maydon nomi."
  *         schema:
  *           type: string
- *         description: "Saralash uchun maydon (masalan: name, createdAt)"
  *       - in: query
  *         name: sortOrder
  *         required: false
+ *         description: "Saralash tartibi. Default: 'ASC' (masalan, 'ASC' yoki 'DESC')."
  *         schema:
  *           type: string
- *           enum: [ASC, DESC]
- *           default: "ASC"
- *         description: "Saralash tartibi (ASC yoki DESC)"
  *       - in: query
- *         name: regionId
+ *         name: filter
  *         required: false
+ *         description: "Filtr parametrlari (masalan, markaz nomi, status va hokazo)."
  *         schema:
- *           type: string
- *         description: "Region ID bo'yicha filtrlash"
- *       - in: query
- *         name: userId
- *         required: false
- *         schema:
- *           type: string
- *         description: "Foydalanuvchi ID bo'yicha filtrlash"
- *       - in: query
- *         name: address
- *         required: false
- *         schema:
- *           type: string
- *         description: "Markaz manzili bo'yicha filtrlash"
+ *           type: object
  *     responses:
  *       200:
- *         description: "Markazlar muvaffaqiyatli qaytarildi"
+ *         description: "Markazlar ro'yxati muvaffaqiyatli qaytarildi."
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       name:
- *                         type: string
- *                       photo:
- *                         type: string
- *                       regionId:
- *                         type: integer
- *                       userId:
- *                         type: integer
- *                       address:
- *                         type: string
- *                 totalItems:
- *                   type: integer
- *                 totalPages:
- *                   type: integer
- *                 currentPage:
- *                   type: integer
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   name:
+ *                     type: string
+ *                   photo:
+ *                     type: string
+ *                   location:
+ *                     type: string
+ *                   regionId:
+ *                     type: integer
  *       400:
- *         description: "Yomon so'rov"
+ *         description: "Noto'g'ri so'rov parametrlaridan foydalanilgan."
+ *       401:
+ *         description: "Foydalanuvchi autentifikatsiya qilinmagan."
+ *       403:
+ *         description: "Foydalanuvchida kerakli ruxsatlar yo'q."
  *       500:
- *         description: "Server xatosi"
+ *         description: "Ichki server xatosi"
  */
 
-centerRouter.get("/",verifyToken,verifyType(['admin','ceo']), findAll);
+
+
 /**
  * @swagger
  * /center/{id}:
  *   get:
- *     summary: "Markaz haqida batafsil ma'lumot olish"
- *     description: "Markazga tegishli ma'lumotlarni, shuningdek, uning filiallari, likelari, o'rtacha reytingi va ko'plab boshqa ma'lumotlarni olish."
+ *     summary: Markazni ID bo'yicha olish
+ *     description: Ushbu so'rov markazning batafsil ma'lumotlarini ID bo'yicha qaytaradi. Faqat 'ADMIN' yoki 'CEO' roliga ega foydalanuvchilar foydalanishi mumkin.
+ *     operationId: getCenterById
  *     tags:
  *       - Center
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
+ *         description: Markazning unikalligi bo'yicha ID raqami.
  *         schema:
  *           type: integer
- *         description: "Markazning ID raqami"
  *     responses:
  *       200:
- *         description: "Markaz va unga tegishli ma'lumotlar muvaffaqiyatli qaytarildi"
+ *         description: Markazning ma'lumotlari muvaffaqiyatli qaytarildi
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 likes_count:
+ *                 id:
  *                   type: integer
- *                   description: "Markazga tegishli likelar soni"
- *                 filials_count:
- *                   type: integer
- *                   description: "Markazga tegishli filiallar soni"
- *                 average_rating:
- *                   type: integer
- *                   description: "Markazning o'rtacha reytingi"
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                     name:
- *                       type: string
- *                     photo:
- *                       type: string
- *                     address:
- *                       type: string
- *                     createdAt:
- *                       type: string
- *                       format: date-time
- *                     updatedAt:
- *                       type: string
- *                       format: date-time
- *                     user:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: integer
- *                         fullName:
- *                           type: string
- *                         image:
- *                           type: string
- *                         type:
- *                           type: string
- *                     region:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: integer
- *                         name:
- *                           type: string
- *                 majority:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       majorityId:
- *                         type: integer
- *                       majority:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: integer
- *                           name:
- *                             type: string
- *                       subjects:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             id:
- *                               type: integer
- *                             name:
- *                               type: string
- *                 likes:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       userId:
- *                         type: integer
- *                       centerId:
- *                         type: integer
- *       404:
- *         description: "Markaz topilmadi"
+ *                 name:
+ *                   type: string
+ *                 location:
+ *                   type: string
+ *                 phone:
+ *                   type: string
+ *                 address:
+ *                   type: string
  *       400:
- *         description: "Yomon so'rov"
+ *         description: Noto'g'ri so'rov parametrlar
+ *       401:
+ *         description: Avtorizatsiya qilinmagan foydalanuvchi
+ *       403:
+ *         description: Foydalanuvchida kerakli ruxsat yo'q
+ *       404:
+ *         description: Markaz topilmadi
  *       500:
- *         description: "Server xatosi"
+ *         description: Ichki server xatosi
  */
 
-centerRouter.get("/:id",verifyToken,verifyType(['admin','ceo']), findOne);
 /**
  * @swagger
  * /center:
  *   post:
- *     summary: "Yangi markaz yaratish"
- *     description: "Markazga rasm yuklash va markaz yozuvini yaratish uchun kerakli ma'lumotlarni yuboradi."
+ *     summary: Yangi markaz yaratish
+ *     description: Ushbu so'rov yangi markazni yaratadi. Foydalanuvchi 'CEO' roliga ega bo'lishi kerak. Ma'lumotlar `form-data` orqali yuboriladi, shu jumladan rasm (foto) va `majors` identifikatorlari.
+ *     operationId: createCenter
  *     tags:
  *       - Center
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
- *       required: true
  *       content:
  *         multipart/form-data:
  *           schema:
@@ -226,96 +167,105 @@ centerRouter.get("/:id",verifyToken,verifyType(['admin','ceo']), findOne);
  *             properties:
  *               name:
  *                 type: string
- *                 description: "Markaz nomi"
+ *                 description: Markaz nomi.
+ *                 example: "Oliy Ta'lim Markazi"
  *               photo:
  *                 type: string
  *                 format: binary
- *                 description: "Markaz rasmi"
+ *                 description: Markaz uchun rasm (foto).
  *               regionId:
  *                 type: integer
- *                 description: "Markazning joylashgan hududi (Region ID)"
- *               userId:
- *                 type: integer
- *                 description: "Markazga tegishli foydalanuvchi ID"
+ *                 description: Markaz joylashgan hududning ID raqami.
+ *                 example: 1
  *               address:
  *                 type: string
- *                 description: "Markaz manzili"
+ *                 description: Markaz manzili.
+ *                 example: "Toshkent, Yunusobod"
  *               majors:
  *                 type: array
  *                 items:
  *                   type: integer
- *                 description: "Spetsialliklar IDlaridan iborat massiv (JSON formatida)"
+ *                 description: Markazga tegishli bo'lgan o'quv yo'nalishlarining identifikatorlari. 
+ *                 example: [1, 3, 4]
  *     responses:
- *       200:
- *         description: "Markaz muvaffaqiyatli yaratildi"
+ *       201:
+ *         description: Markaz muvaffaqiyatli yaratildi
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 message:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                     name:
- *                       type: string
- *                     photo:
- *                       type: string
- *                     userId:
- *                       type: integer
- *                     regionId:
- *                       type: integer
- *                     address:
- *                       type: string
+ *                 id:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 photo:
+ *                   type: string
+ *                 regionId:
+ *                   type: integer
+ *                 address:
+ *                   type: string
+ *                 majors:
+ *                   type: array
+ *                   items:
+ *                     type: integer
  *       400:
- *         description: "Ma'lumotlar noto'g'ri"
- *       404:
- *         description: "Rasm yuklanmagan yoki MajorId mavjud emas"
+ *         description: Yuborilgan ma'lumotlar noto'g'ri yoki yetarli emas.
+ *       401:
+ *         description: Foydalanuvchi autentifikatsiya qilinmagan.
+ *       403:
+ *         description: Foydalanuvchida kerakli ruxsatlar yo'q.
  *       500:
- *         description: "Server xatosi"
+ *         description: Ichki server xatosi
  */
 
-centerRouter.post("/",verifyType(["ceo","admin"]),upload.single("photo"), create);
 
 /**
  * @swagger
  * /center/{id}:
  *   patch:
  *     summary: Markazni yangilash
- *     description: Berilgan IDga asoslanib markaz ma'lumotlarini yangilash (shu jumladan rasmni).
+ *     description: Ushbu so'rovda markaz ma'lumotlari yangilanadi. Foydalanuvchi 'CEO' roliga ega bo'lishi kerak. Agar yangi qiymat berilmasa, eski qiymat qoldiriladi. Ma'lumotlar `form-data` orqali yuboriladi, shu jumladan rasm (foto).
+ *     operationId: updateCenter
  *     tags:
  *       - Center
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: Yangilanishi kerak bo'lgan markazning IDsi
- *         type: string
- *       - in: formData
- *         name: name
- *         type: string
- *         description: Markaz nomi (yangilash)
- *         example: "Yangi Markaz Nomi"
- *       - in: formData
- *         name: photo
- *         type: file
- *         description: Markazning yangi rasmi
- *       - in: formData
- *         name: userId
- *         type: integer
- *         description: Markaz bilan bog'liq foydalanuvchi IDsi (yangilash)
- *         example: 1
- *       - in: formData
- *         name: regionId
- *         type: integer
- *         description: Markaz joylashgan yangi hudud IDsi
- *         example: 3
- *       - in: formData
- *         name: address
- *         type: string
- *         description: Markaz manzili (yangilash)
- *         example: "Toshkent, Yangi Manzil"
+ *         description: Yangilanadigan markazning ID raqami.
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Markaz nomi.
+ *                 example: "Oliy Ta'lim Markazi"
+ *               photo:
+ *                 type: string
+ *                 format: binary
+ *                 description: Markaz uchun rasm (foto).
+ *               regionId:
+ *                 type: integer
+ *                 description: Markaz joylashgan hududning ID raqami.
+ *                 example: 1
+ *               address:
+ *                 type: string
+ *                 description: Markaz manzili.
+ *                 example: "Toshkent, Yunusobod"
+ *               majors:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: Markazga tegishli bo'lgan o'quv yo'nalishlarining identifikatorlari.
+ *                 example: [1, 3, 4]
  *     responses:
  *       200:
  *         description: Markaz muvaffaqiyatli yangilandi
@@ -326,56 +276,60 @@ centerRouter.post("/",verifyType(["ceo","admin"]),upload.single("photo"), create
  *               properties:
  *                 id:
  *                   type: integer
- *                   description: Markazning IDsi
  *                 name:
  *                   type: string
- *                   description: Markaz nomi
  *                 photo:
  *                   type: string
- *                   description: Markaz rasmi (yuklangan fayl)
- *                 userId:
- *                   type: integer
- *                   description: Markaz bilan bog'liq foydalanuvchi IDsi
  *                 regionId:
  *                   type: integer
- *                   description: Markaz joylashgan hudud IDsi
  *                 address:
  *                   type: string
- *                   description: Markaz manzili
- *                 updatedAt:
- *                   type: string
- *                   format: date-time
- *                   description: Markaz yangilanish sanasi
+ *                 majors:
+ *                   type: array
+ *                   items:
+ *                     type: integer
  *       400:
- *         description: Noto'g'ri yoki yetarlicha ma'lumotlar
+ *         description: Yuborilgan ma'lumotlar noto'g'ri yoki yetarli emas.
+ *       401:
+ *         description: Foydalanuvchi autentifikatsiya qilinmagan.
+ *       403:
+ *         description: Foydalanuvchida kerakli ruxsatlar yo'q.
  *       404:
- *         description: Markaz topilmadi
+ *         description: Markaz topilmadi.
  *       500:
- *         description: Server xatosi
+ *         description: Ichki server xatosi
  */
-centerRouter.patch("/:id", verifyType(["ceo"]),upload.single("photo"), update);
+
+
 /**
  * @swagger
  * /center/{id}:
  *   delete:
  *     summary: Markazni o'chirish
- *     description: Berilgan IDga asoslanib markazni o'chirish.
+ *     description: Ushbu so'rovda markaz o'chiriladi. Foydalanuvchi 'CEO' roliga ega bo'lishi kerak. ID raqami orqali markazni topib o'chirish amalga oshiriladi.
+ *     operationId: deleteCenter
  *     tags:
  *       - Center
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: O'chirilishi kerak bo'lgan markazning IDsi
- *         type: string
+ *         description: O'chiriladigan markazning ID raqami.
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
- *         description: Markaz muvaffaqiyatli o'chirildi
+ *         description: Markaz muvaffaqiyatli o'chirildi.
+ *       400:
+ *         description: Noto'g'ri ID raqami yoki so'rov ma'lumotlari.
+ *       401:
+ *         description: Foydalanuvchi autentifikatsiya qilinmagan.
+ *       403:
+ *         description: Foydalanuvchida kerakli ruxsatlar yo'q.
  *       404:
- *         description: Markaz topilmadi
+ *         description: Markaz topilmadi.
  *       500:
- *         description: Server xatosi
+ *         description: Ichki server xatosi
  */
-centerRouter.delete("/:id",verifyType(["ceo"]) ,remove);
-
-export default centerRouter

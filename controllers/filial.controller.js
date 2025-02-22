@@ -4,6 +4,7 @@ import { promises as fs}  from "fs"
 import Region from "../models/region.model.js"
 import Filial from "../models/filial.model.js"
 import { filialValidate } from "../validations/filial.validation.js"
+import { check_phone } from "../validations/emailPhone.validation.js"
 import Like from "../models/like.model.js"
 import MajorityItem from "../models/majorutyItem.model.js"
 import Majority from "../models/majority.model.js"
@@ -34,9 +35,9 @@ async function findOne(req,res) {
        
         let findOne= await Filial.findByPk(id,{include:[{model:Region},{model:Center}]})
         if(!findOne){
-            return  res.status(404).json({message:"not found this kind of center"})
+            return  res.status(404).json({message:"not found this kind of filial"})
         }
-        res.json(300).json(findOne)
+        res.status(200).json(findOne)
     } catch (error) {
         res.status(400).json({message:error.message})
     }
@@ -55,7 +56,13 @@ async function create(req,res) {
              fs.unlink(`uploadsCenter/${filename}`) 
             res.status(400).json({message:error.message})
         }
-        let create = await Filial.create({photo:filename,userId:req.user.id,...data})
+        let newphone = check_phone(data.phone)
+        console.log(newphone);
+        
+        if (!newphone) {
+            return  res.status(404).json({message:"Example for phone: 998901234567"})
+        }
+        let create = await Filial.create({photo:filename,userId:req.user.id,...data,phone:newphone,})
         res.status(200).json({message:create})
     } catch (error) {
         
@@ -68,10 +75,16 @@ async function update(req,res) {
         let data= req.body
         let check =await Filial.findByPk(id)
         if(!check){
-            return  res.status(404).json({message:"not found this kind of center"})
+            return  res.status(404).json({message:"not found this kind of filial"})
+        }
+        let oldimage = check.dataValues.photo;
+        data.photo = req.file ? req.file.filename : oldimage;
+        if (!data.photo){
+            return res.status(404).json({ message: "not uploaded file" })
         }
         await Filial.update(data,{where:{id:id}})
-        return  res.status(204).json({message:"Successfully updated"})
+        await fs.unlink(`uploadsCenter/${oldimage}`); 
+        return  res.status(200).json({message:"Successfully updated"})
     } catch (error) {
         
         res.status(400).json({message:error.message})
@@ -83,11 +96,11 @@ async function remove(req,res) {
         let {id}= req.params
         let check =await Filial.findByPk(id)
         if(!check){
-            return  res.status(404).json({message:"not found this kind of center"})
+            return  res.status(404).json({message:"not found this kind of filial"})
         }
         await Filial.destroy({where:{id:id}})
-        await fs.unlink(`uploads/${check.dataValues.photo}`) 
-        return  res.status(204).json({message:"Successfully removed"})
+        await fs.unlink(`uploadsCenter/${check.dataValues.photo}`) 
+        return  res.status(200).json({message:"Successfully removed"})
     } catch (error) {
         res.status(400).json({message:error.message})
     }

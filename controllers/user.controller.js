@@ -19,7 +19,7 @@ function generateTokens(user) {
     const accessToken = jwt.sign(
         { id: user.id, role: user.role, type: user.type }, 
         process.env.accesstoken, 
-        { expiresIn: "15m" }
+        { expiresIn: "1h" }
     );
 
     const refreshToken = jwt.sign(
@@ -27,14 +27,16 @@ function generateTokens(user) {
         process.env.refreshtoken, 
         { expiresIn: "7d" } 
     );
-
     return { accessToken, refreshToken };
 }
 
 async function send_otp(req, res) {
     try { 
-        console.log("hi");
-        let email = req.body.email;
+        
+        let {email} = req.body
+      
+        console.log(email);
+        
         if(!isGmail(email)){
             return res.status(400).send({error:"The email you entered is in an incorrect format"});
         }
@@ -94,6 +96,7 @@ async function register(req, res) {
         }
         let {value, error} = userValidate(req.body);
         if(error){
+           fs.unlinkSync(`./uploadsUser/${filename}`)  
             return res.status(400).send({error:error.details[0].message});
         }
         let {phone, ...rest} = value;
@@ -114,12 +117,13 @@ async function register(req, res) {
         if(!checkemail){
             return res.status(409).send({error:"This email is not verified or has already been registered!"});
         }
-        if(rest.role==="admin"){
+        if(rest.role==="ADMIN"){
             return res.status(403).send({error:"Registering as an admin is not allowed."});
         }
         if(!rest.type){
             return res.status(400).send({error:"Type is required."});
         }
+        // rest.type = "NOTYPE"
         rest.type = rest.type.toUpperCase();
         rest.role = rest.role ? rest.role.toUpperCase() : "USER";
         
@@ -193,7 +197,7 @@ async function findAll(req,res) {
         }
         const where= {}
                 Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
-        let data = await User.findAndCountAll({where:where,limit:limit,offset:offset,order:order});
+        let data = await User.findAndCountAll({where:where,limit:limit,offset:offset,order:order,attributes:["fullName","phone","image","type"]});
         if(!data){
             return res.status(400).json({error:"There are no users at the moment!"})
         }
@@ -219,8 +223,12 @@ async function findOne(req, res) {
 
 async function createAdmin(req, res) {
     try {
+        if(!req.file){
+            return  res.status(404).json({message:"No file uploded"})
+          }
         let {value, error} = userValidate(req.body);
         if(error){
+            fs.unlinkSync(`./uploadsSubject/${filename}`)  
             res.status(400).send({error:error.details[0].message});
         }
         
@@ -372,12 +380,76 @@ async function update(req, res) {
     }
 }
 
+// async function updateself(req, res) {
+//     try {
+//         let { value, error } = usersPatchValidate(req.body);
+//         if (error) {
+//             return res.status(400).send({ error: error.details[0].message });
+//         }
+//         let { fullName, email, password, phone, type, role } = value;
+//         let { id } = req.params;
+
+//         let dat = await User.findOne({ where: { id } });
+//         if (!dat) {
+//             return res.status(404).send({ error: "User not found." });
+//         }
+
+//         let oldimage = dat.dataValues.image;
+//         let newImage = req.file ? req.file.filename : oldimage;
+
+//         if(phone){
+//             phone = check_phone(phone);
+//                 if(!phone){
+//                     return res.status(400).send({error:"Example for phone: 998567345634"});
+//         }}
+//         if(role){
+//         role = role ? role.toUpperCase() : "USER";
+//             if (role === "ADMIN") {
+//                 if (type) {
+//                     return res.status(400).send({ error: "Admin does not have a type." });
+//             }
+//                 type = "NOTYPE";
+//         }}
+//         if (role === "USER") {
+//             if (!type) {
+//                 return res.status(400).send({ error: "A user must have a type." });
+//             }
+//             type = type.toUpperCase();
+//         }
+
+        
+
+//         fullName = dat.fullName;
+//         type = dat.type;
+//         email = dat.email;
+//         phone = dat.phone
+//         password = dat.password;
+//         role = dat.role;
+
+//         let hash = bcrypt.hashSync(password, 10);
+//         await User.update(
+//             { fullName, image: newImage, email, password: hash, phone, type, role },{ where: {id } });
+
+//         if (req.file && oldimage && oldimage !== newImage) {
+//             const filePath = `uploadsUser/${oldimage}`;
+//             if (fs.existsSync(filePath)) {
+//                 fs.unlinkSync(filePath);
+//             }
+//         }
+        
+//         res.status(200).send({ success: "Updated successfully!" });
+//     } catch (error) {
+//         res.status(500).send({ error: error.message });
+//         console.log({ error });
+//     }
+// }
+
 async function remove(req, res){
     try {
         let {id} = req.params; 
         let dat = await User.findOne({where:{id}});
         if(!dat){
-            res.status(400).send({error:"User not found."});
+          return res.status(400).send({error:"User not found."});   
         }  
         if (dat.image) {
             let imagePath = path.join("uploadsUser", dat.image);

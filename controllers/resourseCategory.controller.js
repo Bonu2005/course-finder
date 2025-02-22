@@ -25,9 +25,9 @@ async function findOne(req,res) {
         let {id}= req.params
         let findOne= await ResourseCategory.findByPk(id)
         if(!findOne){
-            return  res.status(404).json({message:"not found this kind of center"})
+            return  res.status(404).json({message:"not found this kind of resourseCategory"})
         }
-        res.json(300).json(findOne)
+        res.status(200).json(findOne)
     } catch (error) {
         res.status(400).json({message:error.message})
     }
@@ -42,8 +42,9 @@ async function create(req,res) {
         let {error}= resourseCategoryValidate({...data})
         if(error){
             await fs.unlink(`./uploads/${filename}`) 
-          return  res.status(400).json({message:error.message})
+           return  res.status(400).json({message:error.message})
         }
+        data.photo=filename
         let create = await ResourseCategory.create({...data})
         res.status(200).json({message:create})
     } catch (error) {
@@ -58,10 +59,16 @@ async function update(req,res) {
         let data= req.body
         let check =await ResourseCategory.findByPk(id)
         if(!check){
-            return  res.status(404).json({message:"not found this kind of center"})
+            return  res.status(404).json({message:"not found this kind of resourseCategory"})
+        }
+        let oldimage = check.dataValues.photo;
+        data.photo = req.file ? req.file.filename : oldimage;
+        if (!data.photo){
+            return res.status(404).json({ message: "not uploaded file" })
         }
         await ResourseCategory.update(data,{where:{id}})
-        return  res.status(204).json({message:"Successfully updated"})
+        await fs.unlink(`uploadsResourse/${oldimage}`);
+        return  res.status(200).json({message:"Successfully updated"})
     } catch (error) {
         
         res.status(400).json({message:error.message})
@@ -73,11 +80,11 @@ async function remove(req,res) {
         let {id}= req.params
         let check =await ResourseCategory.findByPk(id)
         if(!check){
-            return  res.status(404).json({message:"not found this kind of center"})
+            return  res.status(404).json({message:"not found this kind of resourseCategory"})
         }
-        await ResourseCategory.destroy(id)
+        await ResourseCategory.destroy({where:{id:id}})
         await fs.unlink(`./uploads/${check.dataValues.photo}`) 
-        return  res.status(204).json({message:"Successfully removed"})
+        return  res.status(200).json({message:"Successfully removed"})
     } catch (error) {
         res.status(400).json({message:error.message})
     }

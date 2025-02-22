@@ -1,7 +1,7 @@
 import Joi from "joi";
 function userValidate(data) {
     let userSchema = Joi.object({
-        fullName: Joi.string().min(2).max(10).required(),
+        fullName: Joi.string().min(2).max(30).required(),
         image: Joi.string().optional().allow(null),
         email: Joi.string().required(),
         password: Joi.string().required(),

@@ -9,17 +9,67 @@ const filialRouter = Router()
 
 
 
+
+filialRouter.get("/", findAll)
+
+filialRouter.get("/:id", verifyToken, verifyType(["CEO", "ADMIN"]), findOne)
+
+filialRouter.post("/", verifyToken, verifyType(["CEO"]), upload.single("photo"), create);
+
+filialRouter.patch("/:id", verifyToken, verifyType(["CEO"]), upload.single("photo"), update);
+
+filialRouter.delete("/:id", verifyToken, verifyType(["CEO"]), remove)
+export default filialRouter
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Filial
+ *     description: Filial bilan bog'liq barcha amallars
+ */
 /**
  * @swagger
  * /filial:
  *   get:
- *     summary: Barcha filiallarni olish
- *     description: Barcha filiallarni qaytaradi.
+ *     summary: "Filiallar ro'yxatini olish"
+ *     description: "Bu so'rov filiallar ro'yxatini qaytaradi. Paginatsiya, saralash va filtratsiya parametrlari qo'llab-quvvatlanadi."
+ *     operationId: getFilials
  *     tags:
  *       - Filial
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: "Olingan sahifa raqami. Default: 1."
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: pageSize
+ *         required: false
+ *         description: "Sahifadagi elementlar soni. Default: 10."
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: sortBy
+ *         required: false
+ *         description: "Saralash uchun maydon nomi."
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sortOrder
+ *         required: false
+ *         description: "Saralash tartibi. Default: 'ASC' (masalan, 'ASC' yoki 'DESC')."
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: filter
+ *         required: false
+ *         description: "Filtr parametrlari (masalan, filial nomi, status va hokazo)."
+ *         schema:
+ *           type: object
  *     responses:
  *       200:
- *         description: Barcha filiallar muvaffaqiyatli olindi
+ *         description: "Filiallar ro'yxati muvaffaqiyatli qaytarildi."
  *         content:
  *           application/json:
  *             schema:
@@ -27,87 +77,91 @@ const filialRouter = Router()
  *               items:
  *                 type: object
  *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   name:
+ *                     type: string
  *                   location:
  *                     type: string
- *                     description: Filialning joylashuvi
- *                   photo:
- *                     type: string
- *                     description: Filialning rasmi
  *                   regionId:
  *                     type: integer
- *                     description: Regionning IDsi
  *                   phone:
  *                     type: string
- *                     description: Filialning telefon raqami
  *                   address:
  *                     type: string
- *                     description: Filial manzili
- *                   centerId:
- *                     type: integer
- *                     description: Markaz IDsi
+ *                   photo:
+ *                     type: string
+ *       400:
+ *         description: "Noto'g'ri so'rov parametrlaridan foydalanilgan."
+ *       401:
+ *         description: "Foydalanuvchi autentifikatsiya qilinmagan."
+ *       403:
+ *         description: "Foydalanuvchida kerakli ruxsatlar yo'q."
  *       500:
- *         description: Server xatosi
+ *         description: "Ichki server xatosi"
  */
 
-filialRouter.get("/",findAll)
+
+
+//-----------------------------------------------------------------------------
 
 /**
  * @swagger
  * /filial/{id}:
  *   get:
- *     summary: Filialni ID bo'yicha olish
- *     description: Berilgan IDga asoslanib biror filialni olish.
+ *     summary: "Filiyal haqida ma'lumot olish"
+ *     description: "Bu so'rovda berilgan IDga ega filiyal haqida ma'lumotlar qaytariladi. Foydalanuvchi 'CEO' yoki 'ADMIN' roli bilan autentifikatsiya qilinishi kerak."
+ *     operationId: getFilial
  *     tags:
  *       - Filial
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: Filialning IDsi
- *         type: integer
+ *         description: "Olish kerak bo'lgan filiyalning ID."
+ *         schema:
+ *           type: integer
+ *         example: 1
  *     responses:
  *       200:
- *         description: Filial muvaffaqiyatli olindi
+ *         description: "Filiyal haqida ma'lumot muvaffaqiyatli qaytarildi"
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 location:
- *                   type: string
- *                   description: Filialning joylashuvi
- *                 photo:
- *                   type: string
- *                   description: Filialning rasmi
- *                 regionId:
+ *                 id:
  *                   type: integer
- *                   description: Regionning IDsi
- *                 phone:
+ *                 name:
  *                   type: string
- *                   description: Filialning telefon raqami
  *                 address:
  *                   type: string
- *                   description: Filial manzili
- *                 centerId:
- *                   type: integer
- *                   description: Markaz IDsi
- *       404:
- *         description: Filial topilmadi
+ *                 contactNumber:
+ *                   type: string
+ *       400:
+ *         description: "Filiyal topilmadi"
+ *       401:
+ *         description: "Foydalanuvchi autentifikatsiya qilinmagan"
+ *       403:
+ *         description: "Foydalanuvchi faqat 'CEO' yoki 'ADMIN' roli bilan filiyal ma'lumotlarini ko'rishi mumkin"
  *       500:
- *         description: Server xatosi
+ *         description: "Ichki server xatosi"
  */
-filialRouter.get("/:id", verifyToken, verifyRole(["admin"]),findOne)
 
 /**
  * @swagger
  * /filial:
  *   post:
- *     summary: Yangi filial yaratish
- *     description: Yangi filial yaratish uchun zarur bo'lgan ma'lumotlarni yuboradi.
+ *     summary: "Filial yaratish"
+ *     description: "Yangi filial yaratish. Foydalanuvchi 'CEO' bo'lishi kerak. Ma'lumotlar `form-data` orqali yuboriladi, shu jumladan rasm (foto)."
+ *     operationId: createFilial
  *     tags:
  *       - Filial
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
- *       required: true
  *       content:
  *         multipart/form-data:
  *           schema:
@@ -115,34 +169,161 @@ filialRouter.get("/:id", verifyToken, verifyRole(["admin"]),findOne)
  *             properties:
  *               location:
  *                 type: string
- *                 description: Filialning joylashuvi
+ *                 description: "Filial joylashuvi."
  *               photo:
  *                 type: string
  *                 format: binary
- *                 description: Filial rasmi
+ *                 description: "Filial uchun rasm (foto)."
  *               regionId:
  *                 type: integer
- *                 description: Region IDsi
+ *                 description: "Filial joylashgan hudud (Region)."
  *               phone:
  *                 type: string
- *                 description: Filial telefon raqami
+ *                 description: "Filial telefoni."
  *               address:
  *                 type: string
- *                 description: Filial manzili
+ *                 description: "Filial manzili."
  *               centerId:
  *                 type: integer
- *                 description: Markaz IDsi
+ *                 description: "Filial tegishli bo'lgan markaz (Center)."
  *     responses:
  *       201:
- *         description: Filial muvaffaqiyatli yaratildi
+ *         description: "Filial muvaffaqiyatli yaratildi."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 location:
+ *                   type: string
+ *                 photo:
+ *                   type: string
+ *                 regionId:
+ *                   type: integer
+ *                 phone:
+ *                   type: string
+ *                 address:
+ *                   type: string
+ *                 centerId:
+ *                   type: integer
  *       400:
- *         description: Yomon so'rov
+ *         description: "Yuborilgan ma'lumotlar noto'g'ri yoki yetarli emas."
+ *       401:
+ *         description: "Foydalanuvchi autentifikatsiya qilinmagan."
+ *       403:
+ *         description: "Foydalanuvchida kerakli ruxsatlar yo'q."
  *       500:
- *         description: Server xatosi
+ *         description: "Ichki server xatosi"
  */
-filialRouter.post("/", verifyToken, verifyRole(["admin"]), verifyType(["ceo"]), upload.single("photo"), create);
 
-filialRouter.patch("/:id", verifyToken, verifyRole(["admin"]), verifyType(["ceo"]), upload.single("photo"), update);
+/**
+ * @swagger
+ * /filial/{id}:
+ *   patch:
+ *     summary: "Filialni yangilash"
+ *     description: "Filialni yangilash. Agar ma'lum bir parametr yuborilmagan bo'lsa, eski qiymat saqlanadi."
+ *     operationId: updateFilial
+ *     tags:
+ *       - Filial
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: "Yangilanishi kerak bo'lgan filialning ID raqami."
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               location:
+ *                 type: string
+ *                 description: "Filial joylashuvi."
+ *               photo:
+ *                 type: string
+ *                 format: binary
+ *                 description: "Filial uchun rasm (foto)."
+ *               regionId:
+ *                 type: integer
+ *                 description: "Filial joylashgan hudud (Region)."
+ *               phone:
+ *                 type: string
+ *                 description: "Filial telefoni."
+ *               address:
+ *                 type: string
+ *                 description: "Filial manzili."
+ *               filialId:
+ *                 type: integer
+ *                 description: "Filial tegishli bo'lgan markaz (Center)."
+ *     responses:
+ *       200:
+ *         description: "Filial muvaffaqiyatli yangilandi."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 location:
+ *                   type: string
+ *                 photo:
+ *                   type: string
+ *                 regionId:
+ *                   type: integer
+ *                 phone:
+ *                   type: string
+ *                 address:
+ *                   type: string
+ *                 centerId:
+ *                   type: integer
+ *       400:
+ *         description: "Yuborilgan ma'lumotlar noto'g'ri yoki yetarli emas."
+ *       401:
+ *         description: "Foydalanuvchi autentifikatsiya qilinmagan."
+ *       403:
+ *         description: "Foydalanuvchida kerakli ruxsatlar yo'q."
+ *       404:
+ *         description: "Filial topilmadi."
+ *       500:
+ *         description: "Ichki server xatosi."
+ */
 
-filialRouter.delete("/:id", verifyToken, verifyRole(["admin"]), verifyType(["ceo"]), remove)
-export default filialRouter
+/**
+ * @swagger
+ * /filial/{id}:
+ *   delete:
+ *     summary: "Filialni o'chirish"
+ *     description: "Berilgan ID bo'yicha filialni o'chirish. Foydalanuvchi 'CEO' yoki 'ADMIN' roliga ega bo'lishi kerak."
+ *     operationId: deleteFilial
+ *     tags:
+ *       - Filial
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: "O'chirilishi kerak bo'lgan filialning ID raqami."
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: "Filial muvaffaqiyatli o'chirildi."
+ *       400:
+ *         description: "Yuborilgan ID noto'g'ri."
+ *       401:
+ *         description: "Foydalanuvchi autentifikatsiya qilinmagan."
+ *       403:
+ *         description: "Foydalanuvchida kerakli ruxsatlar yo'q."
+ *       404:
+ *         description: "Filial topilmadi."
+ *       500:
+ *         description: "Ichki server xatosi."
+ */

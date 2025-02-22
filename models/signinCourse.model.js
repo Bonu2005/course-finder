@@ -39,35 +39,13 @@ const SigninCourse = sequelize.define(
     },
     {tableName:"signinCourse"}
 )
-User.belongsToMany(Filial, { through: SigninCourse, foreignKey: "userId", otherKey: "centerId", onDelete: "CASCADE" })
-Filial.belongsToMany(User, { through: SigninCourse, foreignKey: "centerId", otherKey: "userId", onDelete: "CASCADE" })
+User.belongsToMany(Filial, { through: SigninCourse, foreignKey: "userId", otherKey: "filialId", onDelete: "CASCADE" })
+Filial.belongsToMany(User, { through: SigninCourse, foreignKey: "filialId", otherKey: "userId", onDelete: "CASCADE" })
 SigninCourse.belongsTo(User, { foreignKey: "userId" })
-SigninCourse.belongsTo(Filial, { foreignKey: "centerId" })
-
-
+SigninCourse.belongsTo(Filial, { foreignKey: "filialId" })
 SigninCourse.hasMany(Majority, { foreignKey: "majorityId" })
 Majority.belongsTo(SigninCourse, { foreignKey: "majorityId" })
 User.hasMany(SigninCourse, { foreignKey: "userId" })
-Filial.hasMany(SigninCourse, { foreignKey: "centerId" })
-
-
-
-// // Many-to-Many relationship between User and Center through SigninCourse
-// User.belongsToMany(Center, { through: SigninCourse, foreignKey: "userId", otherKey: "centerId", onDelete: "CASCADE" });
-// Center.belongsToMany(User, { through: SigninCourse, foreignKey: "centerId", otherKey: "userId", onDelete: "CASCADE" });
-
-// // SigninCourse has a foreign key to Majority
-// SigninCourse.belongsTo(Majority, { foreignKey: "majorityId" }); // Assuming SigninCourse references Majority via majorityId
-
-// SigninCourse.belongsTo(User, { foreignKey: "userId" });
-// SigninCourse.belongsTo(Center, { foreignKey: "centerId" });
-
-// // One-to-many: SigninCourse has many Majorities
-// SigninCourse.hasMany(Majority, { foreignKey: "signinCourseId" }); // Ensure that Majority has a foreignKey to SigninCourse (signinCourseId)
-
-// Majority.belongsTo(SigninCourse, { foreignKey: "signinCourseId" }); // Assuming Majority has a foreign key reference to SigninCourse
-
-// User.hasMany(SigninCourse, { foreignKey: "userId" });
-// Center.hasMany(SigninCourse, { foreignKey: "centerId" });
+Filial.hasMany(SigninCourse, { foreignKey: "filialId" })
 
 export default SigninCourse

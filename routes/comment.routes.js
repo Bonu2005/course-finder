@@ -5,17 +5,69 @@ import verifyToken from "../middlewares/verifyToken.js";
 
 const commentRouter = Router()
 
+commentRouter.get("/",verifyToken, findAll);
+
+commentRouter.get("/:id",verifyToken, verifyRole(["ADMIN"]), findOne)
+
+commentRouter.post("/",verifyToken, verifyRole(["ADMIN", "USER"]), create)
+
+commentRouter.patch("/:id", verifyToken, verifyRole(["ADMIN", "USER"]), update)
+
+commentRouter.delete("/:id", verifyToken, verifyRole(["ADMIN", "USER"]), remove)
+export default commentRouter
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Comment
+ *     description: Comment bilan bog'liq barcha amallars
+ */
+
 /**
  * @swagger
  * /comment:
  *   get:
- *     summary: Barcha izohlarni olish
- *     description: Barcha izohlarni qaytaradi.
+ *     summary: "Barcha kommentariylarni olish"
+ *     description: "Bu so'rov barcha kommentariylarni olish uchun ishlatiladi. Paginatsiya, saralash va filtratsiya imkoniyatlari mavjud."
+ *     operationId: getAllComments
  *     tags:
  *       - Comment
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: "Sahifa raqami, standart: 1."
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: pageSize
+ *         required: false
+ *         description: "Har bir sahifadagi elementlar soni, standart: 10."
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: sortBy
+ *         required: false
+ *         description: "Saralash uchun maydon."
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sortOrder
+ *         required: false
+ *         description: "Saralash tartibi. Default: 'ASC'. (masalan, 'ASC' yoki 'DESC')"
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: filter
+ *         required: false
+ *         description: "Filtr parametrlari (masalan, komentariy nomi, statusi va boshqalar)."
+ *         schema:
+ *           type: object
  *     responses:
  *       200:
- *         description: Barcha izohlar muvaffaqiyatli olindi
+ *         description: "Kommentariylar muvaffaqiyatli qaytarildi."
  *         content:
  *           application/json:
  *             schema:
@@ -23,72 +75,83 @@ const commentRouter = Router()
  *               items:
  *                 type: object
  *                 properties:
- *                   msg_text:
+ *                   id:
+ *                     type: integer
+ *                   content:
  *                     type: string
- *                     description: Izoh matni
- *                   userId:
- *                     type: integer
- *                     description: Foydalanuvchi IDsi
- *                   star:
- *                     type: integer
- *                     description: Yulduzlar soni (reyting)
- *                   centerId:
- *                     type: integer
- *                     description: Markaz IDsi
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
+ *       400:
+ *         description: "Noto'g'ri so'rov parametrlari."
+ *       401:
+ *         description: "Foydalanuvchi autentifikatsiya qilinmagan."
  *       500:
- *         description: Server xatosi
+ *         description: "Ichki server xatosi."
  */
-commentRouter.get("/", findAll);
+
+
 /**
  * @swagger
  * /comment/{id}:
  *   get:
- *     summary: Izohni ID bo'yicha olish
- *     description: Berilgan IDga asoslanib biror izohni olish.
+ *     summary: "Ma'lum bir kommentariyani olish"
+ *     description: "Bu so'rov ma'lum bir kommentariyani ID orqali olish uchun ishlatiladi. Foydalanuvchi 'ADMIN' roliga ega bo'lishi kerak."
+ *     operationId: getCommentById
  *     tags:
  *       - Comment
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: Izohning IDsi
- *         type: integer
+ *         description: "Kommentariyaning ID raqami."
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
- *         description: Izoh muvaffaqiyatli olindi
+ *         description: "Kommentariy muvaffaqiyatli qaytarildi."
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 msg_text:
+ *                 id:
+ *                   type: integer
+ *                 content:
  *                   type: string
- *                   description: Izoh matni
- *                 userId:
- *                   type: integer
- *                   description: Foydalanuvchi IDsi
- *                 star:
- *                   type: integer
- *                   description: Yulduzlar soni
- *                 centerId:
- *                   type: integer
- *                   description: Markaz IDsi
- *       404:
- *         description: Izoh topilmadi
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: "Noto'g'ri ID."
+ *       401:
+ *         description: "Foydalanuvchi autentifikatsiya qilinmagan."
+ *       403:
+ *         description: "Foydalanuvchida kerakli ruxsatlar yo'q."
  *       500:
- *         description: Server xatosi
+ *         description: "Ichki server xatosi."
  */
-commentRouter.get("/:id",verifyToken, verifyRole(["admin"]), findOne)
+
 /**
  * @swagger
  * /comment:
  *   post:
- *     summary: Yangi izoh yaratish
- *     description: Yangi izoh yaratish uchun zarur bo'lgan ma'lumotlarni yuboradi.
+ *     summary: "Yangi kommentariya yaratish"
+ *     description: "Bu so'rov yangi kommentariya yaratadi. Foydalanuvchi 'ADMIN' yoki 'USER' roliga ega bo'lishi kerak. Ma'lumotlar 'application/json' orqali yuboriladi."
+ *     operationId: createComment
  *     tags:
  *       - Comment
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
@@ -96,84 +159,131 @@ commentRouter.get("/:id",verifyToken, verifyRole(["admin"]), findOne)
  *             properties:
  *               msg_text:
  *                 type: string
- *                 description: Izoh matni
- *               userId:
- *                 type: integer
- *                 description: Foydalanuvchi IDsi
+ *                 description: "Kommentariya matni."
  *               star:
  *                 type: integer
- *                 description: Yulduzlar soni (reyting)
+ *                 description: "Yulduzlar soni (1-5)."
  *               centerId:
  *                 type: integer
- *                 description: Markaz IDsi
+ *                 description: "Markaz ID raqami."
  *     responses:
  *       201:
- *         description: Izoh muvaffaqiyatli yaratildi
+ *         description: "Kommentariya muvaffaqiyatli yaratildi."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 msg_text:
+ *                   type: string
+ *                 star:
+ *                   type: integer
+ *                 centerId:
+ *                   type: integer
+ *                 userId:
+ *                   type: integer
  *       400:
- *         description: Yomon so'rov
+ *         description: "Noto'g'ri ma'lumotlar yuborilgan."
+ *       401:
+ *         description: "Foydalanuvchi autentifikatsiya qilinmagan."
+ *       403:
+ *         description: "Foydalanuvchida kerakli ruxsatlar yo'q."
  *       500:
- *         description: Server xatosi
+ *         description: "Ichki server xatosi."
  */
-commentRouter.post("/",verifyToken, verifyRole(["admin", "user"]), create)
+
 /**
  * @swagger
  * /comment/{id}:
  *   patch:
- *     summary: Izohni yangilash
- *     description: Berilgan IDga asoslanib izohni yangilash.
+ *     summary: "Kommentariyani yangilash"
+ *     description: "Bu so'rov mavjud kommentariyani yangilaydi. Foydalanuvchi 'ADMIN' yoki 'USER' roliga ega bo'lishi kerak. Agar qiymat kiritilmasa, eski qiymat saqlanadi."
+ *     operationId: updateComment
  *     tags:
  *       - Comment
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: Izohning IDsi
- *         type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               msg_text:
- *                 type: string
- *                 description: Yangi izoh matni
- *               star:
- *                 type: integer
- *                 description: Yulduzlar soni (reyting)
+ *         description: Kommentariyaning ID raqami.
+ *         schema:
+ *           type: integer
+ *       - in: body
+ *         name: comment
+ *         required: false
+ *         description: Yangilanishi kerak bo'lgan kommentariya ma'lumotlari.
+ *         schema:
+ *           type: object
+ *           properties:
+ *             msg_text:
+ *               type: string
+ *               description: "Kommentariya matni."
+ *             star:
+ *               type: integer
+ *               description: "Yulduzlar soni (1-5)."
+ *             centerId:
+ *               type: integer
+ *               description: "Markaz ID raqami."
  *     responses:
  *       200:
- *         description: Izoh muvaffaqiyatli yangilandi
+ *         description: "Kommentariya muvaffaqiyatli yangilandi."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 msg_text:
+ *                   type: string
+ *                 star:
+ *                   type: integer
+ *                 centerId:
+ *                   type: integer
  *       400:
- *         description: Yomon so'rov
+ *         description: "Noto'g'ri ma'lumotlar yuborilgan."
+ *       401:
+ *         description: "Foydalanuvchi autentifikatsiya qilinmagan."
+ *       403:
+ *         description: "Foydalanuvchida kerakli ruxsatlar yo'q."
  *       404:
- *         description: Izoh topilmadi
+ *         description: "Komentariya topilmadi."
  *       500:
- *         description: Server xatosi
+ *         description: "Ichki server xatosi."
  */
-commentRouter.patch("/:id", verifyToken, verifyRole(["admin", "user"]), update)
 /**
  * @swagger
  * /comment/{id}:
  *   delete:
- *     summary: Izohni o'chirish
- *     description: Berilgan IDga asoslanib izohni o'chirish.
+ *     summary: "Kommentariya o'chirish"
+ *     description: "Bu so'rovda mavjud kommentariya o'chiriladi. Foydalanuvchi 'ADMIN' yoki o'zining kommentariyasini o'chirish huquqiga ega bo'lishi kerak."
+ *     operationId: removeComment
  *     tags:
  *       - Comment
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: O'chirilishi kerak bo'lgan izohning IDsi
- *         type: integer
+ *         description: Kommentariyaning ID raqami.
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
- *         description: Izoh muvaffaqiyatli o'chirildi
+ *         description: "Kommentariya muvaffaqiyatli o'chirildi."
+ *       400:
+ *         description: "Noto'g'ri ma'lumotlar yuborilgan."
+ *       401:
+ *         description: "Foydalanuvchi autentifikatsiya qilinmagan."
+ *       403:
+ *         description: "Foydalanuvchida kommentariyani o'chirish huquqi yo'q."
  *       404:
- *         description: Izoh topilmadi
+ *         description: "Kommentariya topilmadi."
  *       500:
- *         description: Server xatosi
+ *         description: "Ichki server xatosi."
  */
-commentRouter.delete("/:id", verifyToken, verifyRole(["admin", "user"]), remove)
-export default commentRouter

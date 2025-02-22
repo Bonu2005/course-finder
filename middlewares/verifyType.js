@@ -4,7 +4,7 @@ dotenv.config();
 
 function verifyType(newData){
 return (req,res,next)=>{
-let token = req.headers("Authorization");
+let token = req.header("Authorization");
 
 if(!token){
     return res.status(403).send({error:"Token not found"});

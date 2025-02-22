@@ -2,6 +2,7 @@
 import Center from "../models/center.model.js"
 import Region from "../models/region.model.js"
 import { regionValidate } from "../validations/region.validation.js"
+import { Op } from "sequelize"
 async function findAll(req,res) {
     try {
         const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
@@ -26,9 +27,9 @@ async function findOne(req,res) {
         let {id}= req.params
         let findOne= await Region.findByPk(id)
         if(!findOne){
-            return  res.status(404).json({message:"not found this kind of center"})
+            return  res.status(404).json({message:"not found this kind of region"})
         }
-        res.json(300).json(findOne)
+        res.status(400).json(findOne)
     } catch (error) {
         res.status(400).json({message:error.message})
     }
@@ -52,12 +53,12 @@ async function update(req,res) {
     try {
         let {id}= req.params
         let data= req.body
-        let check =await Region.findByPk(id)
+        let check =await Region.findOne({where:{id:id}})
         if(!check){
-            return  res.status(404).json({message:"not found this kind of center"})
+            return  res.status(404).json({message:"not found this kind of region"})
         }
-        await Region.update(data,{where:{id}})
-        return  res.status(204).json({message:"Successfully updated"})
+       await Region.update(data,{where:{id}})
+        return  res.status(200).json({message:"Successfully updated"})
     } catch (error) {
         
         res.status(400).json({message:error.message})
@@ -67,17 +68,16 @@ async function update(req,res) {
 async function remove(req,res) {
     try {
         let {id}= req.params
-     
+ 
         let check =await Region.findByPk(id)
         if(!check){
-            return  res.status(404).json({message:"not found this kind of center"})
+            return  res.status(404).json({message:"not found this kind of region"})
         }
-        await Region.destroy(id)
+        await Region.destroy({where:{id:id}})
         
-        return  res.status(204).json({message:"Successfully removed"})
+        return  res.status(200).json({message:"Successfully removed"})
     } catch (error) {
         res.status(400).json({message:error.message})
     }
-
 }
 export {findAll,findOne,create,update,remove}

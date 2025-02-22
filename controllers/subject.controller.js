@@ -2,6 +2,8 @@
 
 import Subject from "../models/subject.model.js"
 import { subjectValidate } from "../validations/subject.validation.js"
+import { promises as fs } from "fs"
+import { Op } from "sequelize"
 async function findAll(req,res) {
     try {
         const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
@@ -27,7 +29,7 @@ async function findOne(req,res) {
         if(!findOne){
             return  res.status(404).json({message:"not found this kind of center"})
         }
-        res.json(300).json(findOne)
+        res.status(200).json(findOne)
     } catch (error) {
         res.status(400).json({message:error.message})
     }
@@ -41,10 +43,10 @@ async function create(req,res) {
         let {...data}= req.body
         let {error}= subjectValidate({...data})
         if(error){
-             await fs.unlink(`./uploadsMajority/${filename}`)  
+             await fs.unlink(`./uploadsSubject/${filename}`)  
            return res.status(400).json({message:error.message})
         }
-        let create = await Subject.create({...data})
+        let create = await Subject.create({photo:filename,...data})
         res.status(200).json({message:create})
     } catch (error) {
         res.status(400).json({message:error.message})
@@ -56,10 +58,16 @@ async function update(req,res) {
         let data= req.body
         let check =await Subject.findByPk(id)
         if(!check){
-            return  res.status(404).json({message:"not found this kind of center"})
+            return  res.status(404).json({message:"not found this kind of subject"})
+        }
+        let oldimage = check.dataValues.photo;
+        data.photo = req.file ? req.file.filename : oldimage;
+        if (!data.photo){
+            return res.status(404).json({ message: "not uploaded file" })
         }
         await Subject.update(data,{where:{id}})
-        return  res.status(204).json({message:"Successfully updated"})
+        await fs.unlink(`uploadsSubject/${oldimage}`);
+        return  res.status(200).json({message:"Successfully updated"})
     } catch (error) {
         
         res.status(400).json({message:error.message})
@@ -71,10 +79,10 @@ async function remove(req,res) {
         let {id}= req.params
         let check =await Subject.findByPk(id)
         if(!check){
-            return  res.status(404).json({message:"not found this kind of center"})
+            return  res.status(404).json({message:"not found this kind of subject"})
         }
-        await Subject.destroy(id)
-        return  res.status(204).json({message:"Successfully removed"})
+        await Subject.destroy({where:{id:id}})
+        return  res.status(200).json({message:"Successfully removed"})
     } catch (error) {
         res.status(400).json({message:error.message})
     }

@@ -8,17 +8,15 @@ import swaggerUi from "swagger-ui-express";
 config()
 
 let app = express()
-
-
-// app.use(express.json())
+app.use(express.json())
 app.use("/", mainRouter)
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
-
 async function dbConnection() {
-    await sequelize.sync({ force: true })
+    await sequelize.sync()
     console.log("mysql connected");
     app.listen(process.env.PORT, () => {
         console.log(`server is run on port ${process.env.PORT}`);
     })
+    
 }
 dbConnection()

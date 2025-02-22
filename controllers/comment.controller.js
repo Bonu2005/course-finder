@@ -3,20 +3,59 @@ import Center from "../models/center.model.js"
 import User from "../models/user.model.js"
 import Comment from "../models/comment.model.js"
 import { commentValidate } from "../validations/comment.validation.js"
-async function findAll(req,res) {
+async function findAll(req,res) { 
     try {
-        const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
-        const limit = parseInt(pageSize)
-        const offset = (page-1)*limit
-        const order = []
-        if(sortBy){
-            order.push([sortBy,sortOrder])
+        if(req.user.role=="ADMIN"){
+            const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
+            const limit = parseInt(pageSize)
+            const offset = (page-1)*limit
+            const order = []
+            if(sortBy){
+                order.push([sortBy,sortOrder])
+            }
+            const where= {}
+                    Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
+            let data = await Comment.findAndCountAll({where:where,limit:limit,offset:offset,order:order,include:[{model:User ,attributes: ['fullName', 'image','phone','type']},{model:Center}]})
+    
+            res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
         }
-        const where= {}
-                Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
-        let data = await Comment.findAndCountAll({where:where,limit:limit,offset:offset,order:order,include:[{model:User ,attributes: ['fullName', 'image','phone','type']},{model:Center}]})
+        else if(req.user.role=="USER" && req.user.type!="CEO"){
+            const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
+            const limit = parseInt(pageSize)
+            const offset = (page-1)*limit
+            const order = []
+            if(sortBy){
+                order.push([sortBy,sortOrder])
+            }
+            const where= {}
+                    Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
+            let data = await Comment.findAndCountAll({where:where,where:{userId:req.user.id},limit:limit,offset:offset,order:order,include:[{model:User ,attributes: ['fullName', 'image','phone','type']},{model:Center}]})
+    
+            res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
+        }
+        else if(req.user.role=="USER" && req.user.type=="CEO"){
+            const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
+            const limit = parseInt(pageSize)
+            const offset = (page-1)*limit
+            const order = []
+            if(sortBy){
+                order.push([sortBy,sortOrder])
+            }
+            console.log({userId:req.user.id});
+            
+            let center = await Center.findAll({where:{userId:req.user.id}})
+            if(!center.length){
+             return   res.status(400).json({message:" this center dont have a comment"})
+            }
+            
+            const where= {}
+                    Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
+            let data = await Comment.findAndCountAll({where:where,where:{id:center.id},limit:limit,offset:offset,order:order,include:[{model:User ,attributes: ['fullName', 'image','phone','type']},{model:Center}]})
+    
+            res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
+        }
 
-        res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
+        
     } catch (error) {
         res.status(400).json({message:error.message})
     }
@@ -29,7 +68,7 @@ async function findOne(req,res) {
         if(!findOne){
             return  res.status(404).json({message:"not found this kind of comment"})
         }
-        res.json(300).json(findOne)
+        res.status(200).json(findOne)
     } catch (error) {
         res.status(400).json({message:error.message})
     }
@@ -51,13 +90,25 @@ async function create(req,res) {
 async function update(req,res) {
     try {
         let {id}= req.params
-        let data= req.body
-        let check =await Comment.findByPk(id)
-        if(!check){
-            return  res.status(404).json({message:"not found this kind of center"})
+        console.log(id);
+        
+        let comment= await Comment.findOne({where:{id}})
+        
+        if(comment.userId==req.user.id){
+            console.log(comment);
+        
+            let data= req.body
+            let check =await Comment.findByPk(id)
+            if(!check){
+                return  res.status(404).json({message:"not found this kind of comments"})
+            }
+            await Comment.update(data,{where:{id}})
+            return  res.status(200).json({message:"Successfully updated"})
         }
-        await Comment.update(data,{where:{id}})
-        return  res.status(204).json({message:"Successfully updated"})
+        else{
+            return  res.status(400).json({message:"You can't update others comments"})
+        }
+        
     } catch (error) {
         
         res.status(400).json({message:error.message})
@@ -72,7 +123,7 @@ async function remove(req,res) {
         
         
         if(!check){
-            return  res.status(404).json({message:"not found this kind of center"})
+            return  res.status(404).json({message:"not found this kind of comments"})
         }
         await Comment.destroy({where:{id:id}})
         return  res.status(200).json({message:"Successfully removed"})

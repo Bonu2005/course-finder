@@ -12,10 +12,11 @@ import { centerValidate } from "../validations/center.validation.js"
 import Majority from "../models/majority.model.js"
 import Subject from "../models/subject.model.js"
 import sequelize from "../config/db.js"
+import { Op } from "sequelize"
 
 async function findAll(req, res) {
     try {
-        if (req.user.role == 'admin') {
+        if (req.user.role == 'ADMIN') {
             const { page = 1, pageSize = 10, sortBy, sortOrder = 'ASC', ...filter } = req.query;
             const limit = parseInt(pageSize);
             const offset = (page - 1) * limit;
@@ -76,7 +77,9 @@ async function findAll(req, res) {
                 currentPage: parseInt(page),
             });
         }
-        else if (req.user.type == "ceo") {
+        else if (req.user.type == "CEO") {
+            console.log(req.user.id);
+            
             let find = await Center.findAll({ where: { userId: req.user.id } })
             const { page = 1, pageSize = 10, sortBy, sortOrder = 'ASC', ...filter } = req.query;
             const limit = parseInt(pageSize);
@@ -161,7 +164,8 @@ async function findOne(req, res) {
             ], group: ['centerId']
         })
         if (comment.length) {
-            averageRating = Math.ceil(comment[0].dataValues.average_rating);
+            averageRating = Number.parseFloat(comment[0].dataValues.average_rating);
+           
         }
         res.status(200).json({ 'likes_count': likes_count, 'filials_count': filials_count, 'average_rating': averageRating, data, majority })
     } catch (error) {
@@ -196,20 +200,32 @@ async function create(req, res) {
 }
 async function update(req, res) {
     try {
+        let {id}=req.params
+        
         let { majors, ...data } = req.body
+ 
         let check = await Center.findOne({ where: { id: req.params.id } })
         console.log(check);
         if (!check) {
             return res.status(404).json({ message: "not found this kind of center" })
         }
+        let oldimage = check.dataValues.photo;
+        data.photo = req.file ? req.file.filename : oldimage;
+        if (!data.photo){
+            return res.status(404).json({ message: "not uploaded file" })
+        }
         await Center.update(data, { where: { id } })
+        await fs.unlink(`uploadsCenter/${oldimage}`); 
         await MajorityItem.destroy({where:{centerId:id}})
+        const arr = majors.split(",").map(Number)
+        
         if (majors.length>0) {
-            await MajorityItem.bulkCreate(majors.map((oi) => ({ centerId: check.id, majorityId: oi })))
+            await MajorityItem.bulkCreate(arr.map((oi) => ({ centerId: check.id, majorityId: oi })))
         }
         else{
             return res.status(201).json({ message: "Majors should be empty" })
         }
+        
         return res.status(201).json({ message: "Successfully updated" })
     } catch (error) {
 

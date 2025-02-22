@@ -24,13 +24,28 @@ async function findAll(req,res) {
 }
 async function create(req,res) {
     try {
-        let data= req.body
-        status='panding'
+        let data = req.body
+        console.log(req.user.id);
         
-        let create = await SigninCourse.create({status,userId:req.user.id,...data})
-        console.log(create);
+        const existingRecord = await SigninCourse.findOne({
+            where: {
+                userId: req.user.id,
+                majorityId: data.majorityId,
+                filialId: data.filialId
+            }
+        });
         
-        res.status(200).json({message:create})
+        if (existingRecord) {
+            return res.status(400).json({ message: "This combination already exists" });
+        }
+        
+        const create = await SigninCourse.create({
+            userId: req.user.id,
+            majorityId: data.majorityId,
+            filialId: data.filialId,
+            status: 'pending'
+        });
+        res.status(202).json(create)
     } catch (error) {
         res.status(400).json({message:error.message})
     }
@@ -41,10 +56,10 @@ async function finish(req,res) {
         let status="graduated"
         let check =await Filial.findByPk(id)
         if(!check){
-            return  res.status(404).json({message:"not found this kind of filial of center"})
+            return  res.status(404).json({message:"not found this kind of filial"})
         }
         await Filial.update(status,{where:{id}})
-        return  res.status(204).json({message:"Successfully updated"})
+        return  res.status(200).json({message:"Successfully updated"})
     } catch (error) {
         res.status(400).json({message:error.message})
     }
