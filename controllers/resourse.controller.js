@@ -25,7 +25,7 @@ async function findAll(req,res) {
 async function findOne(req,res) {
     try {
         let {id}= req.params
-        let findOne= await Resourse.findByPk(id,{include:[{model:User},{model:ResourseCategory}]})
+        let findOne= await Resourse.findByPk(id,{include:[{model:User,attributes:['fullName', 'image', 'phone', 'type']},{model:ResourseCategory}]})
         if(!findOne){
             return  res.status(404).json({message:"not found this kind of resourse"})
         }
