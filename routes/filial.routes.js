@@ -3,13 +3,10 @@ import { create, findAll, findOne, remove, update } from "../controllers/filial.
 import upload from "../multer/CentersMulter.js";
 import verifyToken from "../middlewares/verifyToken.js";
 import verifyRole from "../middlewares/verifyRole.js";
-import verifyRole from "../middlewares/verifyRole.js";
-import verifyToken from "../middlewares/verifyToken.js";
 import verifyType from "../middlewares/verifyType.js"
 
 const filialRouter = Router()
 
-import upload from "../multer/multerMajority.js";
 
 
 /**
