@@ -94,13 +94,13 @@ async function register(req, res) {
         if(!req.file){
             return res.status(400).send({error:"No file uploded"}); 
         }
+        let {filename}=req.file
         let {value, error} = userValidate(req.body);
         if(error){
            fs.unlinkSync(`./uploadsUser/${filename}`)  
             return res.status(400).send({error:error.details[0].message});
         }
         let {phone, ...rest} = value;
-        let {filename}=req.file
         if(!isGmail(rest.email)){
             return res.status(400).send({error:"The email you entered is in an incorrect format"});
         }
