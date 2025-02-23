@@ -8,8 +8,6 @@ import cors from "cors"
 config()
 
 let app = express()
-app.use(express.json())
-app.use("/", mainRouter)
 app.use(
     cors({
        origin: "*",
@@ -17,7 +15,9 @@ app.use(
        allowedHeaders: "Content-Type,Authorization",
     })
  );
- 
+app.use(express.json())
+app.use("/", mainRouter)
+
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 async function dbConnection() {
     await sequelize.sync()
