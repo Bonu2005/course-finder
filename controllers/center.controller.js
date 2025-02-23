@@ -156,7 +156,7 @@ async function findOne(req, res) {
         let likes_count = likes.length
         let filials = await Filial.findAll({ where: { centerId: id } })
         let filials_count = filials.length
-        let majority = await MajorityItem.findAll({ where: { centerId: id }, include: [{ model: Majority, include: Subject }] })
+        let majority = await MajorityItem.findAll({ where: { centerId: id }, include: [{ model: Majority,attributes:{exclude:["majorityId"]}, include: Subject }] })
         let averageRating = "no comment"
         let comment = await Comment.findAll({
             where: { centerId: id }, attributes: [

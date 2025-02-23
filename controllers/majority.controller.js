@@ -24,7 +24,7 @@ async function findAll(req, res) {
         const where = {}
         Object.keys(filter).forEach((key) => { where[key] = { [Op.substring]: `%${filter[key]}%` } })
         console.log(where)
-        let data = await Majority.findAndCountAll({where,limit:limit,offset:offset,order:order,include:[Subject, Center]})
+        let data = await Majority.findAndCountAll({where,limit:limit,offset:offset,order:order,include:[Subject, Center],attributes:{exclude:["majorityId"]}})
         res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
       
     } catch (error) {

@@ -5,7 +5,7 @@ import Comment from "../models/comment.model.js"
 import { commentValidate } from "../validations/comment.validation.js"
 async function findAll(req,res) { 
     try {
-        if(req.user.role=="ADMIN"){
+        if(req.user.role=="ADMIN"){ 
             const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
             const limit = parseInt(pageSize)
             const offset = (page-1)*limit
@@ -17,9 +17,10 @@ async function findAll(req,res) {
                     Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
             let data = await Comment.findAndCountAll({where:where,limit:limit,offset:offset,order:order,include:[{model:User ,attributes: ['fullName', 'image','phone','type']},{model:Center}]})
     
-            res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
+         return   res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
         }
         else if(req.user.role=="USER" && req.user.type!="CEO"){
+          
             const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
             const limit = parseInt(pageSize)
             const offset = (page-1)*limit
@@ -31,28 +32,30 @@ async function findAll(req,res) {
                     Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
             let data = await Comment.findAndCountAll({where:where,where:{userId:req.user.id},limit:limit,offset:offset,order:order,include:[{model:User ,attributes: ['fullName', 'image','phone','type']},{model:Center}]})
     
-            res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
+           return res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
         }
         else if(req.user.role=="USER" && req.user.type=="CEO"){
+            console.log("hi");
             const {page =1,pageSize=10,sortBy,sortOrder="ASC",...filter}=req.query
             const limit = parseInt(pageSize)
             const offset = (page-1)*limit
             const order = []
             if(sortBy){
                 order.push([sortBy,sortOrder])
-            }
-            console.log({userId:req.user.id});
-            
+            } 
             let center = await Center.findAll({where:{userId:req.user.id}})
+        
+            
             if(!center.length){
              return   res.status(400).json({message:" this center dont have a comment"})
             }
+          
             
             const where= {}
                     Object.keys(filter).forEach((key)=>{where[key]={[Op.like]:`%${filter[key]}%`}})
-            let data = await Comment.findAndCountAll({where:where,where:{id:center.id},limit:limit,offset:offset,order:order,include:[{model:User ,attributes: ['fullName', 'image','phone','type']},{model:Center}]})
+            let data = await Comment.findAndCountAll({where:where,where:{id:center[0].dataValues.id},limit:limit,offset:offset,order:order,include:[{model:User ,attributes: ['fullName', 'image','phone','type']},{model:Center}]})
     
-            res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
+          return  res.json({data:data.rows,totalItems:data.count,totalPages:Math.ceil(data.count / limit),currentPage:parseInt(page)})
         }
 
         
