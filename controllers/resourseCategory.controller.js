@@ -83,7 +83,7 @@ async function remove(req,res) {
             return  res.status(404).json({message:"not found this kind of resourseCategory"})
         }
         await ResourseCategory.destroy({where:{id:id}})
-        await fs.unlink(`./uploads/${check.dataValues.photo}`) 
+        await fs.unlink(`./uploadsResourse/${check.dataValues.photo}`) 
         return  res.status(200).json({message:"Successfully removed"})
     } catch (error) {
         res.status(400).json({message:error.message})
