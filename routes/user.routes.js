@@ -17,10 +17,11 @@ userRouter.get("/:id", verifyToken,verifyRole(["ADMIN"]), findOne);
 userRouter.post("/", verifyToken, verifyRole(["ADMIN"]), upload.single("image"), createAdmin);
 userRouter.post("/send-update-otp/:id",  send_update_otp)
 userRouter.patch("/:otp2/:oldemail", upload.single("image"), update);
-// userRouter.patch("/updateself/:id", verifyToken, verifySelf(["ADMIN"]), updateself);
 userRouter.delete("/:id", verifyToken, verifyRole(["ADMIN"]), remove);
 userRouter.post("/:id", verifyToken, refreshTokens);
 userRouter.post("/logout", verifyToken, logout);
+// userRouter.patch("/updateself/:id", verifyToken, verifySelf(["ADMIN"]),upload.single("image"), updateself);
+
 export default userRouter;
 
 

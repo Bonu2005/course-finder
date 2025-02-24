@@ -41,7 +41,7 @@ async function create(req,res) {
         let {...data}= req.body
         let {error}= resourseCategoryValidate({...data})
         if(error){
-            await fs.unlink(`./uploads/${filename}`) 
+            await fs.unlink(`./uploadsResourse/${filename}`) 
            return  res.status(400).json({message:error.message})
         }
         data.photo=filename

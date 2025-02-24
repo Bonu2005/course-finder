@@ -227,12 +227,12 @@ async function createAdmin(req, res) {
             return  res.status(404).json({message:"No file uploded"})
           }
         let {value, error} = userValidate(req.body);
-        if(error){
-            fs.unlinkSync(`./uploadsSubject/${filename}`)  
+        if(error){ 
             res.status(400).send({error:error.details[0].message});
         }
         
         let image = req.file.filename;
+
         let {fullName, email, password, phone, type, role} = value;
 
         let newPhone = check_phone(phone);
@@ -380,69 +380,69 @@ async function update(req, res) {
     }
 }
 
-// async function updateself(req, res) {
-//     try {
-//         let { value, error } = usersPatchValidate(req.body);
-//         if (error) {
-//             return res.status(400).send({ error: error.details[0].message });
-//         }
-//         let { fullName, email, password, phone, type, role } = value;
-//         let { id } = req.params;
+async function updateself(req, res) {
+    try {
+        let { value, error } = usersPatchValidate(req.body);
+        if (error) {
+            return res.status(400).send({ error: error.details[0].message });
+        }
+        let { fullName, email, password, phone, type, role } = value;
+        let { id } = req.params;
 
-//         let dat = await User.findOne({ where: { id } });
-//         if (!dat) {
-//             return res.status(404).send({ error: "User not found." });
-//         }
+        let dat = await User.findOne({ where: { id } });
+        if (!dat) {
+            return res.status(404).send({ error: "User not found." });
+        }
 
-//         let oldimage = dat.dataValues.image;
-//         let newImage = req.file ? req.file.filename : oldimage;
+        let oldimage = dat.dataValues.image;
+        let newImage = req.file ? req.file.filename : oldimage;
 
-//         if(phone){
-//             phone = check_phone(phone);
-//                 if(!phone){
-//                     return res.status(400).send({error:"Example for phone: 998567345634"});
-//         }}
-//         if(role){
-//         role = role ? role.toUpperCase() : "USER";
-//             if (role === "ADMIN") {
-//                 if (type) {
-//                     return res.status(400).send({ error: "Admin does not have a type." });
-//             }
-//                 type = "NOTYPE";
-//         }}
-//         if (role === "USER") {
-//             if (!type) {
-//                 return res.status(400).send({ error: "A user must have a type." });
-//             }
-//             type = type.toUpperCase();
-//         }
+        if(phone){
+            phone = check_phone(phone);
+                if(!phone){
+                    return res.status(400).send({error:"Example for phone: 998567345634"});
+        }}
+        if(role){
+        role = role ? role.toUpperCase() : "USER";
+            if (role === "ADMIN") {
+                if (type) {
+                    return res.status(400).send({ error: "Admin does not have a type." });
+            }
+                type = "NOTYPE";
+        }}
+        if (role === "USER") {
+            if (!type) {
+                return res.status(400).send({ error: "A user must have a type." });
+            }
+            type = type.toUpperCase();
+        }
 
         
 
-//         fullName = dat.fullName;
-//         type = dat.type;
-//         email = dat.email;
-//         phone = dat.phone
-//         password = dat.password;
-//         role = dat.role;
+        fullName ||= dat.fullName;
+        type ||= dat.type;
+        email ||= dat.email;
+        phone ||= dat.phone
+        password ||= dat.password;
+        role ||= dat.role;
 
-//         let hash = bcrypt.hashSync(password, 10);
-//         await User.update(
-//             { fullName, image: newImage, email, password: hash, phone, type, role },{ where: {id } });
+        let hash = bcrypt.hashSync(password, 10);
+        await User.update(
+            { fullName, image: newImage, email, password: hash, phone, type, role },{ where: {id } });
 
-//         if (req.file && oldimage && oldimage !== newImage) {
-//             const filePath = `uploadsUser/${oldimage}`;
-//             if (fs.existsSync(filePath)) {
-//                 fs.unlinkSync(filePath);
-//             }
-//         }
+        if (req.file && oldimage && oldimage !== newImage) {
+            const filePath = `uploadsUser/${oldimage}`;
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        }
         
-//         res.status(200).send({ success: "Updated successfully!" });
-//     } catch (error) {
-//         res.status(500).send({ error: error.message });
-//         console.log({ error });
-//     }
-// }
+        res.status(200).send({ success: "Updated successfully!" });
+    } catch (error) {
+        res.status(500).send({ error: error.message });
+        console.log({ error });
+    }
+}
 
 async function remove(req, res){
     try {
@@ -475,4 +475,4 @@ async function logout(req, res) {
     }
 }
 
-export {send_otp, verify_otp, register, login, findAll, findOne, createAdmin, update, remove, send_update_otp, logout};
+export {send_otp, verify_otp, register, login, findAll, findOne, createAdmin, update, remove, send_update_otp, logout,updateself};
