@@ -20,6 +20,4 @@ function check_phone(phone) {
       console.log(e.message);
   }
 }
-
-    
 export {isGmail, check_phone};  

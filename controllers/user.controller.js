@@ -32,11 +32,8 @@ function generateTokens(user) {
 
 async function send_otp(req, res) {
     try { 
-        
         let {email} = req.body
-      
         console.log(email);
-        
         if(!isGmail(email)){
             return res.status(400).send({error:"The email you entered is in an incorrect format"});
         }
@@ -354,7 +351,7 @@ async function update(req, res) {
         }
 
         
-
+        
         fullName ||= dat.fullName;
         type ||= dat.type;
         email ||= dat.email;

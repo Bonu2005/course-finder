@@ -19,8 +19,7 @@ async function findAll(req, res) {
         if (req.user.role == 'ADMIN') {
             const { page = 1, pageSize = 10, sortBy, sortOrder = 'ASC', ...filter } = req.query;
             const limit = parseInt(pageSize);
-            const offset = (page - 1) * limit;
-
+             const offset = (page - 1) * limit;
             const order = [];
             if (sortBy) {
                 order.push([sortBy, sortOrder]);

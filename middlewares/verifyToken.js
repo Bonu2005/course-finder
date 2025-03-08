@@ -13,7 +13,6 @@ if(!token){
 if (token.startsWith("Bearer ")) {
     token = token.split(" ")[1];
 }
-
 try {
     let data = jwt.verify(token, process.env.accesstoken);
     req.user = data;
